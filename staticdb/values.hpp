@@ -5,6 +5,7 @@
 #include <silicium/variant.hpp>
 #include <silicium/to_unique.hpp>
 #include <silicium/sink/append.hpp>
+#include <cstdint>
 
 namespace staticdb
 {
