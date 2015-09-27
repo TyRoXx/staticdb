@@ -6,6 +6,7 @@
 #include <silicium/sink/iterator_sink.hpp>
 #include <silicium/sink/append.hpp>
 #include <boost/concept_check.hpp>
+#include <cstdint>
 
 namespace staticdb
 {
