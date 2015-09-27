@@ -39,13 +39,15 @@ namespace staticdb
 
 		struct type : Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>>
 		{
+			typedef Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>> base;
+
 			type()
 			{
 			}
 
 			template <class A0, class ...Args>
 			type(A0 &&a0, Args &&...args)
-				: Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>>(std::forward<A0>(a0), std::forward<Args>(args)...)
+				: base(std::forward<A0>(a0), std::forward<Args>(args)...)
 			{
 			}
 
@@ -110,6 +112,10 @@ namespace staticdb
 		{
 			std::vector<Value> elements;
 
+			basic_tuple()
+			{
+			}
+
 			basic_tuple copy() const
 			{
 				basic_tuple result;
@@ -120,6 +126,22 @@ namespace staticdb
 				}
 				return result;
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_tuple)
+#else
+			basic_tuple(basic_tuple &&other) BOOST_NOEXCEPT
+				: elements(std::move(other.elements))
+			{
+			}
+
+			basic_tuple &operator = (basic_tuple &&other) BOOST_NOEXCEPT
+			{
+				elements = std::move(other.elements);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_tuple)
 		};
 
 		template <class Value>
@@ -171,31 +193,26 @@ namespace staticdb
 			};
 		}
 
-		struct value : Si::variant<unit, bit, basic_tuple<value>, basic_variant<value>>
+		struct value : Si::non_copyable_variant<unit, bit, basic_tuple<value>, basic_variant<value>>
 		{
+			typedef Si::non_copyable_variant<unit, bit, basic_tuple<value>, basic_variant<value>> base;
+
 			value()
 			{
 			}
 
 			template <class A0, class ...Args>
 			value(A0 &&a0, Args &&...args)
-				: Si::variant<unit, bit, basic_tuple<value>, basic_variant<value>>(std::forward<A0>(a0), std::forward<Args>(args)...)
+				: base(std::forward<A0>(a0), std::forward<Args>(args)...)
 			{
 			}
-
-			template <class Other>
-			value &operator = (Other &&other)
-			{
-				static_cast<Si::variant<unit, bit, basic_tuple<value>, basic_variant<value>> &>(*this) = std::forward<Other>(other);
-				return *this;
-			}
-
-			Si::variant<unit, bit, basic_tuple<value>, basic_variant<value>> &as_variant()
+			
+			base &as_variant()
 			{
 				return *this;
 			}
 
-			Si::variant<unit, bit, basic_tuple<value>, basic_variant<value>> const &as_variant() const
+			base const &as_variant() const
 			{
 				return *this;
 			}
@@ -209,7 +226,7 @@ namespace staticdb
 			SILICIUM_DEFAULT_MOVE(value)
 #else
 			value(value &&other) BOOST_NOEXCEPT
-				: Si::variant<unit, bit, basic_tuple<value>, basic_variant<value>>(std::move(other.as_variant()))
+				: base(std::move(other.as_variant()))
 			{
 			}
 
