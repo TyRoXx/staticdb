@@ -139,7 +139,20 @@ namespace staticdb
 				return result;
 			}
 
+#if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_variant)
+#else
+			basic_variant(basic_variant &&other) BOOST_NOEXCEPT
+				: content(std::move(other.content))
+			{
+			}
+
+			basic_variant &operator = (basic_variant &&other) BOOST_NOEXCEPT
+			{
+				content = std::move(other.content);
+				return *this;
+			}
+#endif
 			SILICIUM_DISABLE_COPY(basic_variant)
 		};
 
@@ -177,6 +190,11 @@ namespace staticdb
 				return *this;
 			}
 
+			Si::variant<unit, bit, basic_tuple<value>, basic_variant<value>> &as_variant()
+			{
+				return *this;
+			}
+
 			Si::variant<unit, bit, basic_tuple<value>, basic_variant<value>> const &as_variant() const
 			{
 				return *this;
@@ -187,7 +205,20 @@ namespace staticdb
 				return as_variant().apply_visitor(detail::copying_visitor<value>());
 			}
 
+#if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(value)
+#else
+			value(value &&other) BOOST_NOEXCEPT
+				: Si::variant<unit, bit, basic_tuple<value>, basic_variant<value>>(std::move(other.as_variant()))
+			{
+			}
+
+			value &operator = (value &&other) BOOST_NOEXCEPT
+			{
+				as_variant() = std::move(other.as_variant());
+				return *this;
+			}
+#endif
 			SILICIUM_DISABLE_COPY(value)
 		};
 
