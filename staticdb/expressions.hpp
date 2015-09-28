@@ -11,10 +11,30 @@ namespace staticdb
 		{
 			values::value value;
 
+			literal()
+			{
+			}
+
 			explicit literal(values::value value)
 			    : value(std::move(value))
 			{
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(literal)
+#else
+			literal(literal &&other) BOOST_NOEXCEPT
+				: value(std::move(other.value))
+			{
+			}
+
+			literal &operator = (literal &&other) BOOST_NOEXCEPT
+			{
+				value = std::move(other.value);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(literal)
 		};
 
 		struct argument
@@ -38,6 +58,10 @@ namespace staticdb
 			std::unique_ptr<Expression> tuple;
 			std::unique_ptr<Expression> index;
 
+			basic_tuple_at()
+			{
+			}
+
 			basic_tuple_at(
 				std::unique_ptr<Expression> tuple,
 				std::unique_ptr<Expression> index)
@@ -45,6 +69,24 @@ namespace staticdb
 			    , index(std::move(index))
 			{
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_tuple_at)
+#else
+			basic_tuple_at(basic_tuple_at &&other) BOOST_NOEXCEPT
+				: tuple(std::move(other.tuple))
+				, index(std::move(other.index))
+			{
+			}
+
+			basic_tuple_at &operator = (basic_tuple_at &&other) BOOST_NOEXCEPT
+			{
+				tuple = std::move(other.tuple);
+				index = std::move(other.index);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_tuple_at)
 		};
 
 		template <class Expression>
@@ -128,7 +170,7 @@ namespace staticdb
 					{
 						throw std::invalid_argument("tuple_at was called with a non-tuple index (second) argument");
 					}
-					Si::optional<boost::uint64_t> const is_index = parse_unsigned_integer(*is_index_tuple);
+					Si::optional<std::size_t> const is_index = values::parse_unsigned_integer<std::size_t>(*is_index_tuple);
 					if (!is_index)
 					{
 						throw std::invalid_argument("tuple_at was called with a non-integer index (second) argument");

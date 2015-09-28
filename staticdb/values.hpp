@@ -190,19 +190,20 @@ namespace staticdb
 			return result;
 		}
 
-		inline Si::optional<std::uint64_t> parse_unsigned_integer(tuple const &big_endian)
+		template <class Unsigned>
+		inline Si::optional<Unsigned> parse_unsigned_integer(tuple const &big_endian)
 		{
-			std::uint64_t result = 0;
+			Unsigned result = 0;
 			std::size_t parsed_bits = 0;
 			for (;;)
 			{
-				if (parsed_bits == 64)
-				{
-					return Si::none;
-				}
 				if (parsed_bits >= big_endian.elements.size())
 				{
 					return result;
+				}
+				if (parsed_bits == (CHAR_BIT * sizeof(result)))
+				{
+					return Si::none;
 				}
 				bit const * const bit_element = Si::try_get_ptr<bit>(big_endian.elements[parsed_bits]);
 				if (!bit_element)

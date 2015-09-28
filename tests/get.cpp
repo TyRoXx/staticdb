@@ -18,6 +18,6 @@ BOOST_AUTO_TEST_CASE(get)
 	staticdb::values::value const result = staticdb::expressions::execute(first, root);
 	staticdb::values::tuple const * const result_tuple = Si::try_get_ptr<staticdb::values::tuple>(result);
 	BOOST_REQUIRE(result_tuple);
-	Si::optional<std::uint64_t> const parsed_result = staticdb::values::parse_unsigned_integer(*result_tuple);
-	BOOST_CHECK_EQUAL(Si::optional<std::uint64_t>(23), parsed_result);
+	Si::optional<std::uint8_t> const parsed_result = staticdb::values::parse_unsigned_integer<std::uint8_t>(*result_tuple);
+	BOOST_CHECK_EQUAL(Si::optional<std::uint8_t>(23), parsed_result);
 }
