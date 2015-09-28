@@ -174,9 +174,11 @@ namespace staticdb
 		struct basic_call
 		{
 			std::unique_ptr<Expression> function;
+			std::vector<Expression> arguments;
 
-			explicit basic_call(std::unique_ptr<Expression> function)
+			explicit basic_call(std::unique_ptr<Expression> function, std::vector<Expression> arguments)
 				: function(std::move(function))
+				, arguments(std::move(arguments))
 			{
 			}
 
@@ -185,12 +187,14 @@ namespace staticdb
 #else
 			basic_call(basic_call &&other) BOOST_NOEXCEPT
 				: function(std::move(other.function))
+				, arguments(std::move(other.arguments))
 			{
 			}
 
 			basic_call &operator = (basic_call &&other) BOOST_NOEXCEPT
 			{
 				function = std::move(other.function);
+				arguments = std::move(other.arguments);
 				return *this;
 			}
 #endif
