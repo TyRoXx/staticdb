@@ -105,6 +105,26 @@ namespace staticdb
 			    , negative(std::move(negative))
 			{
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_branch)
+#else
+			basic_branch(basic_branch &&other) BOOST_NOEXCEPT
+				: condition(std::move(other.condition))
+				, positive(std::move(other.positive))
+				, negative(std::move(other.negative))
+			{
+			}
+
+			basic_branch &operator = (basic_branch &&other) BOOST_NOEXCEPT
+			{
+				condition = std::move(other.condition);
+				positive = std::move(other.positive);
+				negative = std::move(other.negative);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_branch)
 		};
 
 		template <class Expression>
@@ -116,6 +136,22 @@ namespace staticdb
 				: body(std::move(body))
 			{
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_lambda)
+#else
+			basic_lambda(basic_lambda &&other) BOOST_NOEXCEPT
+				: body(std::move(other.body))
+			{
+			}
+
+			basic_lambda &operator = (basic_lambda &&other) BOOST_NOEXCEPT
+			{
+				body = std::move(other.body);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_lambda)
 		};
 
 		struct expression : Si::variant<literal, argument, basic_make_tuple<expression>, basic_tuple_at<expression>, basic_branch<expression>, basic_lambda<expression>>
