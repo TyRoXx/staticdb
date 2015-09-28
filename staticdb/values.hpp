@@ -250,8 +250,8 @@ namespace staticdb
 			);
 		}
 
-		template <class Sink>
-		inline void serialize(Sink &&destination, value const &object)
+		template <class BitSink>
+		inline void serialize(BitSink &&destination, value const &object)
 		{
 			return Si::visit<void>(
 				object,
@@ -260,7 +260,7 @@ namespace staticdb
 				},
 				[&destination](bit value)
 				{
-					Si::append(destination, (value.is_set ? 'y' : 'n'));
+					Si::append(destination, value);
 				},
 				[&destination](tuple const &t)
 				{

@@ -14,6 +14,6 @@ BOOST_AUTO_TEST_CASE(staticdb_trivial)
 	staticdb::memory_storage storage;
 	staticdb::initialize_storage(storage, my_root.copy());
 
-	std::string const expected_storage = "nyyyynyy";
+	std::vector<unsigned char> const expected_storage{123};
 	BOOST_CHECK_EQUAL_COLLECTIONS(expected_storage.begin(), expected_storage.end(), storage.memory.begin(), storage.memory.end());
 }

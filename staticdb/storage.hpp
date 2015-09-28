@@ -3,6 +3,7 @@
 
 #include <staticdb/values.hpp>
 #include <silicium/sink/iterator_sink.hpp>
+#include <staticdb/bit_sink.hpp>
 
 namespace staticdb
 {
@@ -13,8 +14,9 @@ namespace staticdb
 
 	inline void initialize_storage(memory_storage &storage, values::value const &root)
 	{
-		auto writer = Si::Sink<char, Si::success>::erase(Si::make_container_sink(storage.memory));
+		auto writer = make_bits_to_byte_sink(Si::make_container_sink(storage.memory));
 		values::serialize(writer, root);
+		assert(writer.buffered_bits() == 0);
 	}
 }
 
