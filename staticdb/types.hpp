@@ -19,12 +19,30 @@ namespace staticdb
 		struct basic_tuple
 		{
 			std::vector<Type> elements;
+
+			basic_tuple()
+			{
+			}
+
+			explicit basic_tuple(std::vector<Type> elements)
+				: elements(std::move(elements))
+			{
+			}
 		};
 
 		template <class Type>
 		struct basic_variant
 		{
 			std::vector<Type> possibilities;
+
+			basic_variant()
+			{
+			}
+
+			explicit basic_variant(std::vector<Type> possibilities)
+				: possibilities(std::move(possibilities))
+			{
+			}
 		};
 
 		struct type : Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>>

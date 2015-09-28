@@ -90,6 +90,12 @@ namespace staticdb
 			{
 			}
 
+			explicit basic_variant(std::unique_ptr<Value> content)
+				: content(std::move(content))
+			{
+				assert(this->content);
+			}
+
 			basic_variant copy() const
 			{
 				assert(content);
