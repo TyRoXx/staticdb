@@ -1,5 +1,8 @@
 #include <boost/test/unit_test.hpp>
-#include <staticdb/staticdb.hpp>
+#include <staticdb/values.hpp>
+#include <staticdb/bit_sink.hpp>
+#include <staticdb/storage.hpp>
+#include <silicium/sink/iterator_sink.hpp>
 
 BOOST_AUTO_TEST_CASE(staticdb_trivial)
 {
@@ -12,7 +15,9 @@ BOOST_AUTO_TEST_CASE(staticdb_trivial)
 	BOOST_CHECK(staticdb::values::conforms_to_type(my_root.copy(), root));
 
 	staticdb::memory_storage storage;
-	staticdb::initialize_storage(storage, my_root.copy());
+	auto writer = staticdb::make_bits_to_byte_sink(Si::make_container_sink(storage.memory));
+	staticdb::values::serialize(writer, my_root.copy());
+	assert(writer.buffered_bits() == 0);
 
 	std::vector<std::uint8_t> const expected_storage{123};
 	BOOST_CHECK_EQUAL_COLLECTIONS(expected_storage.begin(), expected_storage.end(), storage.memory.begin(), storage.memory.end());
