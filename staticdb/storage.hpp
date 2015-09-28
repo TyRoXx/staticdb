@@ -51,16 +51,24 @@ namespace staticdb
 
 		Si::memory_source<byte> read_at(address where)
 		{
-			return Si::memory_source<byte>(Si::make_iterator_range(memory.data() + std::min(where, memory.size()), memory.data() + memory.size()));
+			if (where >= (std::numeric_limits<std::size_t>::max)())
+			{
+				throw std::invalid_argument("read_at where address out of range");
+			}
+			std::size_t const limited_where = (std::min)(static_cast<std::size_t>(where), memory.size());
+			return Si::memory_source<byte>(Si::make_iterator_range(memory.data() + limited_where, memory.data() + memory.size()));
 		}
 
 		vector_sink<byte> write_at(address where)
 		{
-			memory.resize(std::max(where, memory.size()));
-			return vector_sink<byte>(memory, where);
+			if (where >= (std::numeric_limits<std::size_t>::max)())
+			{
+				throw std::invalid_argument("write_at where address out of range");
+			}
+			memory.resize((std::max)(static_cast<std::size_t>(where), memory.size()));
+			return vector_sink<byte>(memory, static_cast<std::size_t>(where));
 		}
 	};
-
 }
 
 #endif
