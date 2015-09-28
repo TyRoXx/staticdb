@@ -58,7 +58,7 @@ namespace staticdb
 			{
 				m_next_byte = 0;
 			}
-			m_next_byte |= static_cast<std::uint8_t>((value.is_set ? 1u : 0u) << (7u - m_buffered_bits));
+			m_next_byte = static_cast<std::uint8_t>(m_next_byte | ((value.is_set ? 1u : 0u) << (7u - m_buffered_bits)));
 			++m_buffered_bits;
 			if (m_buffered_bits != bits_in_byte)
 			{
