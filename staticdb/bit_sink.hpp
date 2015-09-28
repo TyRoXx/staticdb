@@ -75,6 +75,7 @@ namespace staticdb
 
 	template <class ByteSink>
 	auto make_bits_to_byte_sink(ByteSink &&bytes)
+		-> bits_to_byte_sink<typename std::decay<ByteSink>::type>
 	{
 		return bits_to_byte_sink<typename std::decay<ByteSink>::type>(std::forward<ByteSink>(bytes));
 	}
