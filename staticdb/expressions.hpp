@@ -50,6 +50,22 @@ namespace staticdb
 			    : elements(std::move(elements))
 			{
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_make_tuple)
+#else
+			basic_make_tuple(basic_make_tuple &&other) BOOST_NOEXCEPT
+				: elements(std::move(other.elements))
+			{
+			}
+
+			basic_make_tuple &operator = (basic_make_tuple &&other) BOOST_NOEXCEPT
+			{
+				elements = std::move(other.elements);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_make_tuple)
 		};
 
 		template <class Expression>
@@ -163,6 +179,32 @@ namespace staticdb
 				: base(std::forward<A0>(a0), std::forward<Args>(args)...)
 			{
 			}
+
+			base &as_variant()
+			{
+				return *this;
+			}
+
+			base const &as_variant() const
+			{
+				return *this;
+			}
+			
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(expression)
+#else
+			expression(expression &&other) BOOST_NOEXCEPT
+				: base(std::move(other.as_variant()))
+			{
+			}
+
+			expression &operator = (expression &&other) BOOST_NOEXCEPT
+			{
+				as_variant() = std::move(other.as_variant());
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(expression)
 		};
 
 		typedef basic_make_tuple<expression> make_tuple;
