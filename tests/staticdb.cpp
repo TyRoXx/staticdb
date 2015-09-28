@@ -4,7 +4,7 @@
 #include <staticdb/storage.hpp>
 #include <silicium/sink/iterator_sink.hpp>
 
-BOOST_AUTO_TEST_CASE(staticdb_trivial)
+BOOST_AUTO_TEST_CASE(serialize_unsigned_integer)
 {
 	staticdb::types::tuple const uint8 = staticdb::types::make_unsigned_integer(8);
 	staticdb::types::variant const root = staticdb::types::make_optional(uint8);

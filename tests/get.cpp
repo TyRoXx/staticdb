@@ -4,7 +4,7 @@
 #include <staticdb/storage.hpp>
 #include <staticdb/expressions.hpp>
 
-BOOST_AUTO_TEST_CASE(get)
+BOOST_AUTO_TEST_CASE(tuple_at)
 {
 	auto argument = Si::make_unique<staticdb::expressions::expression>(staticdb::expressions::argument());
 	auto zero = Si::make_unique<staticdb::expressions::expression>(staticdb::expressions::literal(staticdb::values::make_unsigned_integer(0)));
