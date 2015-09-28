@@ -11,11 +11,12 @@ namespace staticdb
 	struct basic_plan
 	{
 		typedef Storage storage_type;
-		typedef Si::function<values::value (Storage &, values::value const &)> planned_get_function;
-		typedef Si::function<values::value (Storage &, values::value const &)> planned_set_function;
+		typedef Si::function<values::value (storage_type &, values::value const &)> planned_get_function;
+		typedef Si::function<values::value (storage_type &, values::value const &)> planned_set_function;
 
 		std::vector<planned_get_function> gets;
 		std::vector<planned_set_function> sets;
+		Si::function<void (storage_type &)> initialize_storage;
 	};
 
 	typedef expressions::expression get_function;
