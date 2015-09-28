@@ -68,6 +68,16 @@ namespace staticdb
 		typedef basic_tuple<type> tuple;
 		typedef basic_variant<type> variant;
 
+		template <class ...Types>
+		tuple make_tuple(Types &&...elements)
+		{
+			std::vector<type> elements_vector;
+			elements_vector.reserve(sizeof...(Types));
+			int dummy[] = {(elements_vector.emplace_back(std::forward<Types>(elements)), 0)...};
+			(void)dummy;
+			return tuple(std::move(elements_vector));
+		}
+
 		inline tuple make_unsigned_integer(std::size_t bits)
 		{
 			tuple integer;
