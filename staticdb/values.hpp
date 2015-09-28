@@ -210,8 +210,8 @@ namespace staticdb
 				{
 					return Si::none;
 				}
-				result <<= 1;
-				result |= (bit_element->is_set ? 1u : 0u);
+				result = static_cast<Unsigned>(result << 1u);
+				result = static_cast<Unsigned>(result | (bit_element->is_set ? 1u : 0u));
 				++parsed_bits;
 			}
 		}
