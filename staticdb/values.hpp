@@ -5,6 +5,7 @@
 #include <silicium/variant.hpp>
 #include <silicium/to_unique.hpp>
 #include <silicium/sink/append.hpp>
+#include <silicium/optional.hpp>
 #include <cstdint>
 
 namespace staticdb
@@ -44,6 +45,11 @@ namespace staticdb
 			std::vector<Value> elements;
 
 			basic_tuple()
+			{
+			}
+
+			explicit basic_tuple(std::vector<Value> elements)
+				: elements(std::move(elements))
 			{
 			}
 
@@ -182,6 +188,31 @@ namespace staticdb
 				result.elements[i] = bit(((value >> (7 - i)) & 1) != 0);
 			}
 			return result;
+		}
+
+		inline Si::optional<std::uint64_t> parse_unsigned_integer(tuple const &big_endian)
+		{
+			std::uint64_t result = 0;
+			std::size_t parsed_bits = 0;
+			for (;;)
+			{
+				if (parsed_bits == 64)
+				{
+					return Si::none;
+				}
+				if (parsed_bits >= big_endian.elements.size())
+				{
+					return result;
+				}
+				bit const * const bit_element = Si::try_get_ptr<bit>(big_endian.elements[parsed_bits]);
+				if (!bit_element)
+				{
+					return Si::none;
+				}
+				result <<= 1;
+				result |= (bit_element->is_set ? 1u : 0u);
+				++parsed_bits;
+			}
 		}
 
 		inline variant make_some(value content)
