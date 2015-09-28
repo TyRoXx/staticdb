@@ -170,9 +170,36 @@ namespace staticdb
 			SILICIUM_DISABLE_COPY(basic_lambda)
 		};
 
-		struct expression : Si::variant<literal, argument, basic_make_tuple<expression>, basic_tuple_at<expression>, basic_branch<expression>, basic_lambda<expression>>
+		template <class Expression>
+		struct basic_call
 		{
-			typedef Si::variant<literal, argument, basic_make_tuple<expression>, basic_tuple_at<expression>, basic_branch<expression>, basic_lambda<expression>> base;
+			std::unique_ptr<Expression> function;
+
+			explicit basic_call(std::unique_ptr<Expression> function)
+				: function(std::move(function))
+			{
+			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_call)
+#else
+			basic_call(basic_call &&other) BOOST_NOEXCEPT
+				: function(std::move(other.function))
+			{
+			}
+
+			basic_call &operator = (basic_call &&other) BOOST_NOEXCEPT
+			{
+				function = std::move(other.function);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_call)
+		};
+
+		struct expression : Si::variant<literal, argument, basic_make_tuple<expression>, basic_tuple_at<expression>, basic_branch<expression>, basic_lambda<expression>, basic_call<expression>>
+		{
+			typedef Si::variant<literal, argument, basic_make_tuple<expression>, basic_tuple_at<expression>, basic_branch<expression>, basic_lambda<expression>, basic_call<expression>> base;
 
 			template <class A0, class ...Args>
 			explicit expression(A0 &&a0, Args &&...args)
@@ -211,6 +238,7 @@ namespace staticdb
 		typedef basic_tuple_at<expression> tuple_at;
 		typedef basic_branch<expression> branch;
 		typedef basic_lambda<expression> lambda;
+		typedef basic_call<expression> call;
 
 		inline values::value execute(expression const &program, values::value const &argument)
 		{
@@ -264,6 +292,10 @@ namespace staticdb
 					throw std::logic_error("not implemented");
 				},
 				[](lambda const &) -> values::value
+				{
+					throw std::logic_error("not implemented");
+				},
+				[](call const &) -> values::value
 				{
 					throw std::logic_error("not implemented");
 				}
