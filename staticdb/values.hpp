@@ -121,6 +121,61 @@ namespace staticdb
 			SILICIUM_DISABLE_COPY(basic_variant)
 		};
 
+		struct closure_body
+		{
+			virtual ~closure_body()
+			{
+			}
+			virtual std::unique_ptr<closure_body> clone() const = 0;
+		};
+
+		template <class Value>
+		struct basic_closure
+		{
+			std::unique_ptr<closure_body> body;
+			std::unique_ptr<Value> bound;
+
+			basic_closure()
+			{
+			}
+
+			explicit basic_closure(std::unique_ptr<closure_body> body, std::unique_ptr<Value> bound)
+				: body(std::move(body))
+				, bound(std::move(bound))
+			{
+				assert(this->body);
+				assert(this->bound);
+			}
+
+			basic_closure copy() const
+			{
+				assert(this->body);
+				assert(this->bound);
+				basic_closure result;
+				result.body = body->clone();
+				result.bound = Si::to_unique(bound->copy());
+				return result;
+			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_closure)
+#else
+			basic_closure(basic_closure &&other) BOOST_NOEXCEPT
+				: body(std::move(other.body))
+				, bound(std::move(other.bound))
+			{
+			}
+
+			basic_closure &operator = (basic_closure &&other) BOOST_NOEXCEPT
+			{
+				body = std::move(other.body);
+				bound = std::move(other.bound);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_closure)
+		};
+
 		namespace detail
 		{
 			template <class Result>
@@ -136,9 +191,21 @@ namespace staticdb
 			};
 		}
 
-		struct value : Si::non_copyable_variant<unit, bit, basic_tuple<value>, basic_variant<value>>
+		template <class Value>
+		struct make_value_type
 		{
-			typedef Si::non_copyable_variant<unit, bit, basic_tuple<value>, basic_variant<value>> base;
+			typedef Si::non_copyable_variant<
+				unit,
+				bit,
+				basic_tuple<Value>,
+				basic_variant<Value>,
+				basic_closure<Value>
+			> type;
+		};
+
+		struct value : make_value_type<value>::type
+		{
+			typedef make_value_type<value>::type base;
 
 			value()
 			{
@@ -184,6 +251,7 @@ namespace staticdb
 
 		typedef basic_tuple<value> tuple;
 		typedef basic_variant<value> variant;
+		typedef basic_closure<value> closure;
 
 		template <class Unsigned>
 		inline tuple make_unsigned_integer(Unsigned value)
@@ -298,6 +366,10 @@ namespace staticdb
 						}
 					}
 					return false;
+				},
+				[](closure const &) -> bool
+				{
+					throw std::logic_error("not implemented");
 				}
 			);
 		}
@@ -325,6 +397,10 @@ namespace staticdb
 				{
 					assert(value.content);
 					return serialize(destination, *value.content);
+				},
+				[](closure const &)
+				{
+					throw std::logic_error("not implemented");
 				}
 			);
 		}

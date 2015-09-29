@@ -71,7 +71,7 @@ namespace staticdb
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
-			SILICIUM_DEFAULT_NOEXCEPT_MOVE(basic_array)
+			SILICIUM_DEFAULT_MOVE(basic_array)
 #else
 			basic_array(basic_array &&other) BOOST_NOEXCEPT
 				: elements(std::move(other.elements))
