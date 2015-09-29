@@ -22,6 +22,22 @@ namespace staticdb
 				: elements(std::move(elements))
 			{
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(tuple)
+#else
+			tuple(tuple &&other) BOOST_NOEXCEPT
+				: elements(std::move(other.elements))
+			{
+			}
+
+			tuple &operator = (tuple &&other) BOOST_NOEXCEPT
+			{
+				elements = std::move(other.elements);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(tuple)
 		};
 
 		struct array
@@ -32,6 +48,22 @@ namespace staticdb
 				: element(std::move(element))
 			{
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(array)
+#else
+			array(array &&other) BOOST_NOEXCEPT
+				: element(std::move(other.element))
+			{
+			}
+
+			array &operator = (array &&other) BOOST_NOEXCEPT
+			{
+				element = std::move(other.element);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(array)
 		};
 
 		struct bitset
@@ -52,6 +84,22 @@ namespace staticdb
 				: possibilities(std::move(possibilities))
 			{
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(variant)
+#else
+			variant(variant &&other) BOOST_NOEXCEPT
+				: possibilities(std::move(other.possibilities))
+			{
+			}
+
+			variant &operator = (variant &&other) BOOST_NOEXCEPT
+			{
+				possibilities = std::move(other.possibilities);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(variant)
 		};
 
 		struct layout : Si::variant<unit, tuple, array, bitset, variant>
@@ -64,10 +112,31 @@ namespace staticdb
 			{
 			}
 
+			base &as_variant()
+			{
+				return *this;
+			}
+
 			base const &as_variant() const
 			{
 				return *this;
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(layout)
+#else
+			layout(layout &&other) BOOST_NOEXCEPT
+				: base(std::move(other.as_variant()))
+			{
+			}
+
+			layout &operator = (layout &&other) BOOST_NOEXCEPT
+			{
+				as_variant() = std::move(other.as_variant());
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(layout)
 		};
 
 		inline layout calculate(types::type const &root)
