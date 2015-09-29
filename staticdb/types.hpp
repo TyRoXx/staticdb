@@ -15,6 +15,10 @@ namespace staticdb
 		{
 		};
 
+		struct function
+		{
+		};
+
 		template <class Type>
 		struct basic_tuple
 		{
@@ -86,9 +90,22 @@ namespace staticdb
 #endif
 		};
 
-		struct type : Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>, basic_array<type>>
+		template <class Type>
+		struct make_type
 		{
-			typedef Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>, basic_array<type>> base;
+			typedef Si::variant<
+				unit,
+				bit,
+				function,
+				basic_tuple<Type>,
+				basic_variant<Type>,
+				basic_array<Type>
+			> type;
+		};
+
+		struct type : make_type<type>::type
+		{
+			typedef make_type<type>::type base;
 
 			type()
 			{

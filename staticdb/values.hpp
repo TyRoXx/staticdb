@@ -367,9 +367,9 @@ namespace staticdb
 					}
 					return false;
 				},
-				[](closure const &) -> bool
+				[&expected](closure const &) -> bool
 				{
-					throw std::logic_error("not implemented");
+					return Si::try_get_ptr<types::function>(expected.as_variant()) != nullptr;
 				}
 			);
 		}
