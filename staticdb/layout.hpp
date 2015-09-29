@@ -139,6 +139,80 @@ namespace staticdb
 			SILICIUM_DISABLE_COPY(layout)
 		};
 
+		bool operator == (layout const &left, layout const &right);
+
+		inline bool operator == (unit, unit)
+		{
+			return true;
+		}
+
+		inline bool operator == (tuple const &left, tuple const &right)
+		{
+			return left.elements == right.elements;
+		}
+
+		inline bool operator == (array const &left, array const &right)
+		{
+			return *left.element == *right.element;
+		}
+
+		inline bool operator == (bitset left, bitset right)
+		{
+			return left.length == right.length;
+		}
+
+		inline bool operator == (variant const &left, variant const &right)
+		{
+			return left.possibilities == right.possibilities;
+		}
+
+		inline bool operator == (layout const &left, layout const &right)
+		{
+			return left.as_variant() == right.as_variant();
+		}
+
+		std::ostream &operator << (std::ostream &out, layout const &value);
+
+		inline std::ostream &operator << (std::ostream &out, unit)
+		{
+			return out << "unit";
+		}
+
+		inline std::ostream &operator << (std::ostream &out, tuple const &value)
+		{
+			out << "tuple{";
+			for (layout const &element : value.elements)
+			{
+				out << element << ", ";
+			}
+			return out << "}";
+		}
+
+		inline std::ostream &operator << (std::ostream &out, array const &value)
+		{
+			return out << "array(" << *value.element << ")";
+		}
+
+		inline std::ostream &operator << (std::ostream &out, bitset value)
+		{
+			return out << "bitset(" << value.length << ")";
+		}
+
+		inline std::ostream &operator << (std::ostream &out, variant const &value)
+		{
+			out << "variant{";
+			for (layout const &element : value.possibilities)
+			{
+				out << element << ", ";
+			}
+			return out << "}";
+		}
+
+		inline std::ostream &operator << (std::ostream &out, layout const &value)
+		{
+			return out << value.as_variant();
+		}
+
 		inline layout calculate(types::type const &root)
 		{
 			return Si::visit<layout>(
