@@ -59,8 +59,6 @@ namespace staticdb
 			{
 			}
 
-			SILICIUM_DEFAULT_NOEXCEPT_MOVE(basic_array)
-
 			basic_array(basic_array const &other)
 				: elements(Si::make_unique<Type>(*other.elements))
 			{
@@ -71,6 +69,21 @@ namespace staticdb
 				elements = Si::make_unique<Type>(*other.elements);
 				return *this;
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_NOEXCEPT_MOVE(basic_array)
+#else
+			basic_array(basic_array &&other) BOOST_NOEXCEPT
+				: elements(std::move(other.elements))
+			{
+			}
+
+			basic_array &operator = (basic_array &&other) BOOST_NOEXCEPT
+			{
+				elements = std::move(other.elements);
+				return *this;
+			}
+#endif
 		};
 
 		struct type : Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>, basic_array<type>>

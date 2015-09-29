@@ -43,6 +43,6 @@ BOOST_AUTO_TEST_CASE(find_uint_in_array_plan)
 	Si::iterator_range<staticdb::set_function const *> sets;
 	auto const planned = staticdb::make_plan<decltype(storage)>(root_type, gets, sets);
 
-	BOOST_CHECK_EQUAL(1, planned.gets.size());
+	BOOST_CHECK_EQUAL(1u, planned.gets.size());
 	BOOST_CHECK(planned.sets.empty());
 }
