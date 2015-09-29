@@ -253,7 +253,19 @@ namespace staticdb
 					types::tuple const * const expected_tuple = Si::try_get_ptr<types::tuple>(expected.as_variant());
 					if (!expected_tuple)
 					{
-						return false;
+						types::array const * const expected_array = Si::try_get_ptr<types::array>(expected.as_variant());
+						if (!expected_array)
+						{
+							return false;
+						}
+						for (values::value const &element : value.elements)
+						{
+							if (!conforms_to_type(element, *expected_array->elements))
+							{
+								return false;
+							}
+						}
+						return true;
 					}
 					if (expected_tuple->elements.size() != value.elements.size())
 					{
@@ -270,13 +282,13 @@ namespace staticdb
 				},
 				[&expected](variant const &value) -> bool
 				{
+					assert(value.content);
 					types::variant const * const expected_variant = Si::try_get_ptr<types::variant>(expected.as_variant());
 					if (!expected_variant)
 					{
 						return false;
 					}
-					assert(value.content);
-					for (types::type const possibility : expected_variant->possibilities)
+					for (types::type const &possibility : expected_variant->possibilities)
 					{
 						if (conforms_to_type(*value.content, possibility))
 						{

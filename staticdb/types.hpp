@@ -45,9 +45,37 @@ namespace staticdb
 			}
 		};
 
-		struct type : Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>>
+		template <class Type>
+		struct basic_array
 		{
-			typedef Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>> base;
+			std::unique_ptr<Type> elements;
+
+			basic_array()
+			{
+			}
+
+			explicit basic_array(std::unique_ptr<Type> elements)
+				: elements(std::move(elements))
+			{
+			}
+
+			SILICIUM_DEFAULT_NOEXCEPT_MOVE(basic_array)
+
+			basic_array(basic_array const &other)
+				: elements(Si::make_unique<Type>(*other.elements))
+			{
+			}
+
+			basic_array &operator = (basic_array const &other)
+			{
+				elements = Si::make_unique<Type>(*other.elements);
+				return *this;
+			}
+		};
+
+		struct type : Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>, basic_array<type>>
+		{
+			typedef Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>, basic_array<type>> base;
 
 			type()
 			{
@@ -59,7 +87,7 @@ namespace staticdb
 			{
 			}
 
-			Si::variant<unit, bit, basic_tuple<type>, basic_variant<type>> const &as_variant() const
+			base const &as_variant() const
 			{
 				return *this;
 			}
@@ -67,6 +95,7 @@ namespace staticdb
 
 		typedef basic_tuple<type> tuple;
 		typedef basic_variant<type> variant;
+		typedef basic_array<type> array;
 
 		template <class ...Types>
 		tuple make_tuple(Types &&...elements)

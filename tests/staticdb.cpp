@@ -39,6 +39,7 @@ namespace
 		types.emplace_back(staticdb::types::unit());
 		return types;
 	}());
+	staticdb::types::type const array_of_bits = staticdb::types::array(Si::make_unique<staticdb::types::type>(staticdb::types::bit()));
 }
 
 BOOST_AUTO_TEST_CASE(unit_conforms_to_type)
@@ -49,6 +50,7 @@ BOOST_AUTO_TEST_CASE(unit_conforms_to_type)
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, empty_tuple_type));
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, tuple_of_bit));
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, variant_bit_unit));
+	BOOST_CHECK(!staticdb::values::conforms_to_type(value, array_of_bits));
 }
 
 BOOST_AUTO_TEST_CASE(bit_conforms_to_type)
@@ -59,6 +61,7 @@ BOOST_AUTO_TEST_CASE(bit_conforms_to_type)
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, empty_tuple_type));
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, tuple_of_bit));
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, variant_bit_unit));
+	BOOST_CHECK(!staticdb::values::conforms_to_type(value, array_of_bits));
 }
 
 BOOST_AUTO_TEST_CASE(empty_tuple_conforms_to_type)
@@ -69,6 +72,7 @@ BOOST_AUTO_TEST_CASE(empty_tuple_conforms_to_type)
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, bit_type));
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, tuple_of_bit));
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, variant_bit_unit));
+	BOOST_CHECK(staticdb::values::conforms_to_type(value, array_of_bits));
 }
 
 BOOST_AUTO_TEST_CASE(one_tuple_conforms_to_type)
@@ -81,6 +85,7 @@ BOOST_AUTO_TEST_CASE(one_tuple_conforms_to_type)
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, bit_type));
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, empty_tuple_type));
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, variant_bit_unit));
+	BOOST_CHECK(staticdb::values::conforms_to_type(value, array_of_bits));
 }
 
 BOOST_AUTO_TEST_CASE(variant_conforms_to_type)
@@ -91,4 +96,21 @@ BOOST_AUTO_TEST_CASE(variant_conforms_to_type)
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, bit_type));
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, empty_tuple_type));
 	BOOST_CHECK(!staticdb::values::conforms_to_type(value, tuple_of_bit));
+	BOOST_CHECK(!staticdb::values::conforms_to_type(value, array_of_bits));
+}
+
+BOOST_AUTO_TEST_CASE(array_conforms_to_type)
+{
+	std::vector<staticdb::values::value> values;
+	values.emplace_back(staticdb::values::bit(false));
+	values.emplace_back(staticdb::values::bit(false));
+	values.emplace_back(staticdb::values::bit(false));
+	values.emplace_back(staticdb::values::bit(false));
+	staticdb::values::value value = staticdb::values::tuple(std::move(values));
+	BOOST_CHECK(!staticdb::values::conforms_to_type(value, variant_bit_unit));
+	BOOST_CHECK(!staticdb::values::conforms_to_type(value, unit_type));
+	BOOST_CHECK(!staticdb::values::conforms_to_type(value, bit_type));
+	BOOST_CHECK(!staticdb::values::conforms_to_type(value, empty_tuple_type));
+	BOOST_CHECK(!staticdb::values::conforms_to_type(value, tuple_of_bit));
+	BOOST_CHECK(staticdb::values::conforms_to_type(value, array_of_bits));
 }
