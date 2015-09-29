@@ -52,9 +52,25 @@ namespace staticdb
 		}
 		for (get_function const &get : gets)
 		{
-			result.gets.emplace_back([get = get.copy(), root_layout](storage_type &storage, values::value const &argument) -> values::value
+#if !SILICIUM_COMPILER_HAS_EXTENDED_CAPTURE
+			auto get_ptr = Si::to_shared(get.copy());
+#endif
+			result.gets.emplace_back([
+#if SILICIUM_COMPILER_HAS_EXTENDED_CAPTURE
+				get = get.copy()
+#else
+				get_ptr
+#endif
+				, root_layout
+			](storage_type &storage, values::value const &argument) -> values::value
 			{
-				return run_getter(storage, get, argument, *root_layout);
+				return run_getter(storage,
+#if SILICIUM_COMPILER_HAS_EXTENDED_CAPTURE
+					get,
+#else
+					*get_ptr,
+#endif
+					argument, *root_layout);
 			});
 		}
 		return result;
