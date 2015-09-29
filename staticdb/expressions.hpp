@@ -20,6 +20,11 @@ namespace staticdb
 			{
 			}
 
+			literal copy() const
+			{
+				return literal(value.copy());
+			}
+
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(literal)
 #else
@@ -39,11 +44,34 @@ namespace staticdb
 
 		struct argument
 		{
+			argument copy() const
+			{
+				return argument();
+			}
 		};
 
 		struct bound
 		{
+			bound copy() const
+			{
+				return bound();
+			}
 		};
+
+		namespace detail
+		{
+			template <class ExplicitlyCopyable>
+			std::vector<ExplicitlyCopyable> copy(std::vector<ExplicitlyCopyable> const &v)
+			{
+				std::vector<ExplicitlyCopyable> result;
+				result.reserve(v.size());
+				for (ExplicitlyCopyable const &e : v)
+				{
+					result.emplace_back(e.copy());
+				}
+				return result;
+			}
+		}
 
 		template <class Expression>
 		struct basic_make_tuple
@@ -53,6 +81,11 @@ namespace staticdb
 			explicit basic_make_tuple(std::vector<Expression> elements)
 			    : elements(std::move(elements))
 			{
+			}
+
+			basic_make_tuple copy() const
+			{
+				return basic_make_tuple(detail::copy(elements));
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
@@ -88,6 +121,11 @@ namespace staticdb
 			    : tuple(std::move(tuple))
 			    , index(std::move(index))
 			{
+			}
+
+			basic_tuple_at copy() const
+			{
+				return basic_tuple_at(Si::to_unique(tuple->copy()), Si::to_unique(index->copy()));
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
@@ -126,6 +164,11 @@ namespace staticdb
 			{
 			}
 
+			basic_branch copy() const
+			{
+				return basic_branch(Si::to_unique(condition->copy()), Si::to_unique(positive->copy()), Si::to_unique(negative->copy()));
+			}
+
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_branch)
 #else
@@ -159,6 +202,11 @@ namespace staticdb
 			{
 			}
 
+			basic_lambda copy() const
+			{
+				return basic_lambda(Si::to_unique(body->copy()), Si::to_unique(bound->copy()));
+			}
+
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_lambda)
 #else
@@ -188,6 +236,11 @@ namespace staticdb
 				: function(std::move(function))
 				, arguments(std::move(arguments))
 			{
+			}
+
+			basic_call copy() const
+			{
+				return basic_call(Si::to_unique(function->copy()), detail::copy(arguments));
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
@@ -221,6 +274,11 @@ namespace staticdb
 			{
 			}
 
+			basic_filter copy() const
+			{
+				return basic_filter(Si::to_unique(input->copy()), Si::to_unique(predicate->copy()));
+			}
+
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_filter)
 #else
@@ -250,6 +308,11 @@ namespace staticdb
 				: first(std::move(first))
 				, second(std::move(second))
 			{
+			}
+
+			basic_equals copy() const
+			{
+				return basic_equals(Si::to_unique(first->copy()), Si::to_unique(second->copy()));
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
@@ -293,7 +356,7 @@ namespace staticdb
 			typedef make_expression_type<expression>::type base;
 
 			template <class A0, class ...Args>
-			explicit expression(A0 &&a0, Args &&...args)
+			expression(A0 &&a0, Args &&...args)
 				: base(std::forward<A0>(a0), std::forward<Args>(args)...)
 			{
 			}
@@ -306,6 +369,11 @@ namespace staticdb
 			base const &as_variant() const
 			{
 				return *this;
+			}
+
+			expression copy() const
+			{
+				return as_variant().apply_visitor(values::detail::copying_visitor<expression>());
 			}
 			
 #if SILICIUM_COMPILER_GENERATES_MOVES

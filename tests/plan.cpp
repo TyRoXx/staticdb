@@ -53,8 +53,11 @@ BOOST_AUTO_TEST_CASE(find_uint_in_array_plan)
 	));
 	Si::iterator_range<staticdb::get_function const *> gets(&find_equals, &find_equals + 1);
 	Si::iterator_range<staticdb::set_function const *> sets;
-	auto const planned = staticdb::make_plan<decltype(storage)>(root_type, gets, sets);
+	staticdb::basic_plan<decltype(storage)> const planned = staticdb::make_plan<decltype(storage)>(root_type, gets, sets);
 
 	BOOST_CHECK_EQUAL(1u, planned.gets.size());
 	BOOST_CHECK(planned.sets.empty());
+
+	staticdb::values::value const found = planned.gets[0](storage, staticdb::values::value(staticdb::values::make_unsigned_integer<std::uint8_t>(2)));
+	//TODO: check result
 }
