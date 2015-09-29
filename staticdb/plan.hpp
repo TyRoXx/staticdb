@@ -25,10 +25,19 @@ namespace staticdb
 	template <class Storage>
 	inline basic_plan<Storage> make_plan(types::type const &root, Si::iterator_range<get_function const *> gets, Si::iterator_range<set_function const *> sets)
 	{
+		typedef Storage storage_type;
 		boost::ignore_unused_variable_warning(root);
-		boost::ignore_unused_variable_warning(gets);
 		boost::ignore_unused_variable_warning(sets);
-		return basic_plan<Storage>(); //TODO
+		basic_plan<Storage> result;
+		for (get_function const &get : gets)
+		{
+			boost::ignore_unused_variable_warning(get);
+			result.gets.emplace_back([](storage_type &, values::value const &) -> values::value
+			{
+				throw std::logic_error("not implemented");
+			});
+		}
+		return result;
 	}
 }
 

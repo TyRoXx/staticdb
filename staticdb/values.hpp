@@ -185,13 +185,15 @@ namespace staticdb
 		typedef basic_tuple<value> tuple;
 		typedef basic_variant<value> variant;
 
-		inline tuple make_unsigned_integer(std::uint8_t value)
+		template <class Unsigned>
+		inline tuple make_unsigned_integer(Unsigned value)
 		{
 			tuple result;
-			result.elements.resize(8);
-			for (size_t i = 0; i < 8; ++i)
+			std::size_t const bits = CHAR_BIT * sizeof(value);
+			result.elements.resize(bits);
+			for (size_t i = 0; i < bits; ++i)
 			{
-				result.elements[i] = bit(((value >> (7 - i)) & 1) != 0);
+				result.elements[i] = bit(((value >> (bits - 1 - i)) & 1) != 0);
 			}
 			return result;
 		}

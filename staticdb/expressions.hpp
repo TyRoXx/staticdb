@@ -41,6 +41,10 @@ namespace staticdb
 		{
 		};
 
+		struct bound
+		{
+		};
+
 		template <class Expression>
 		struct basic_make_tuple
 		{
@@ -147,9 +151,11 @@ namespace staticdb
 		struct basic_lambda
 		{
 			std::unique_ptr<Expression> body;
+			std::unique_ptr<Expression> bound;
 
-			explicit basic_lambda(std::unique_ptr<Expression> body)
+			explicit basic_lambda(std::unique_ptr<Expression> body, std::unique_ptr<Expression> bound)
 				: body(std::move(body))
+				, bound(std::move(bound))
 			{
 			}
 
@@ -158,12 +164,14 @@ namespace staticdb
 #else
 			basic_lambda(basic_lambda &&other) BOOST_NOEXCEPT
 				: body(std::move(other.body))
+				, bound(std::move(other.bound))
 			{
 			}
 
 			basic_lambda &operator = (basic_lambda &&other) BOOST_NOEXCEPT
 			{
 				body = std::move(other.body);
+				bound = std::move(other.bound);
 				return *this;
 			}
 #endif
@@ -201,9 +209,88 @@ namespace staticdb
 			SILICIUM_DISABLE_COPY(basic_call)
 		};
 
-		struct expression : Si::variant<literal, argument, basic_make_tuple<expression>, basic_tuple_at<expression>, basic_branch<expression>, basic_lambda<expression>, basic_call<expression>>
+		template <class Expression>
+		struct basic_filter
 		{
-			typedef Si::variant<literal, argument, basic_make_tuple<expression>, basic_tuple_at<expression>, basic_branch<expression>, basic_lambda<expression>, basic_call<expression>> base;
+			std::unique_ptr<Expression> input;
+			std::unique_ptr<Expression> predicate;
+
+			explicit basic_filter(std::unique_ptr<Expression> input, std::unique_ptr<Expression> predicate)
+				: input(std::move(input))
+				, predicate(std::move(predicate))
+			{
+			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_filter)
+#else
+			basic_filter(basic_filter &&other) BOOST_NOEXCEPT
+				: input(std::move(other.input))
+				, predicate(std::move(other.predicate))
+			{
+			}
+
+			basic_filter &operator = (basic_filter &&other) BOOST_NOEXCEPT
+			{
+				input = std::move(other.input);
+				predicate = std::move(other.predicate);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_filter)
+		};
+
+		template <class Expression>
+		struct basic_equals
+		{
+			std::unique_ptr<Expression> first;
+			std::unique_ptr<Expression> second;
+
+			explicit basic_equals(std::unique_ptr<Expression> first, std::unique_ptr<Expression> second)
+				: first(std::move(first))
+				, second(std::move(second))
+			{
+			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_equals)
+#else
+			basic_equals(basic_equals &&other) BOOST_NOEXCEPT
+				: first(std::move(other.first))
+				, second(std::move(other.second))
+			{
+			}
+
+			basic_equals &operator = (basic_equals &&other) BOOST_NOEXCEPT
+			{
+				first = std::move(other.first);
+				second = std::move(other.second);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_equals)
+		};
+
+		template <class Expression>
+		struct make_expression_type
+		{
+			typedef Si::variant<
+				literal,
+				argument,
+				bound,
+				basic_make_tuple<Expression>,
+				basic_tuple_at<Expression>,
+				basic_branch<Expression>,
+				basic_lambda<Expression>,
+				basic_call<Expression>,
+				basic_filter<Expression>,
+				basic_equals<Expression>
+			> type;
+		};
+
+		struct expression : make_expression_type<expression>::type
+		{
+			typedef make_expression_type<expression>::type base;
 
 			template <class A0, class ...Args>
 			explicit expression(A0 &&a0, Args &&...args)
@@ -243,8 +330,15 @@ namespace staticdb
 		typedef basic_branch<expression> branch;
 		typedef basic_lambda<expression> lambda;
 		typedef basic_call<expression> call;
+		typedef basic_filter<expression> filter;
+		typedef basic_equals<expression> equals;
 
-		inline values::value execute(expression const &program, values::value const &argument)
+		inline tuple_at make_tuple_at(expression tuple, std::size_t index)
+		{
+			return tuple_at(Si::to_unique(std::move(tuple)), Si::make_unique<expression>(literal(values::make_unsigned_integer(index))));
+		}
+
+		inline values::value execute(expression const &program, values::value const &argument_, values::value const &bound_)
 		{
 			return Si::visit<values::value>(
 				program,
@@ -252,24 +346,28 @@ namespace staticdb
 				{
 					return literal_.value.copy();
 				},
-				[&argument](expressions::argument)
+				[&argument_](argument)
 				{
-					return argument.copy();
+					return argument_.copy();
 				},
-				[&argument](make_tuple const &make_tuple_)
+				[&bound_](bound)
+				{
+					return bound_.copy();
+				},
+				[&argument_, &bound_](make_tuple const &make_tuple_)
 				{
 					values::tuple result;
 					result.elements.reserve(make_tuple_.elements.size());
 					for (expression const &element : make_tuple_.elements)
 					{
-						result.elements.emplace_back(execute(element, argument));
+						result.elements.emplace_back(execute(element, argument_, bound_));
 					}
 					return values::value(std::move(result));
 				},
-				[&argument](tuple_at const &tuple_at_)
+				[&argument_, &bound_](tuple_at const &tuple_at_)
 				{
-					values::value const tuple_ = execute(*tuple_at_.tuple, argument);
-					values::value const index = execute(*tuple_at_.index, argument);
+					values::value const tuple_ = execute(*tuple_at_.tuple, argument_, bound_);
+					values::value const index = execute(*tuple_at_.index, argument_, bound_);
 					values::tuple const * const is_tuple = Si::try_get_ptr<values::tuple>(tuple_.as_variant());
 					if (!is_tuple)
 					{
@@ -291,7 +389,7 @@ namespace staticdb
 					}
 					return is_tuple->elements[*is_index].copy();
 				},
-				[&argument](branch const &) -> values::value
+				[&argument_](branch const &) -> values::value
 				{
 					throw std::logic_error("not implemented");
 				},
@@ -300,6 +398,14 @@ namespace staticdb
 					throw std::logic_error("not implemented");
 				},
 				[](call const &) -> values::value
+				{
+					throw std::logic_error("not implemented");
+				},
+				[](filter const &) -> values::value
+				{
+					throw std::logic_error("not implemented");
+				},
+				[](equals const &) -> values::value
 				{
 					throw std::logic_error("not implemented");
 				}
