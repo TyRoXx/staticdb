@@ -1,6 +1,8 @@
 #include <boost/test/unit_test.hpp>
 #include <staticdb/plan.hpp>
 #include <staticdb/expressions.hpp>
+#include <staticdb/bit_sink.hpp>
+#include <silicium/sink/iterator_sink.hpp>
 
 BOOST_AUTO_TEST_CASE(trivial_plan)
 {
@@ -26,6 +28,16 @@ BOOST_AUTO_TEST_CASE(find_uint_in_array_plan)
 	types::type const root_type = types::array(Si::make_unique<types::type>(types::make_unsigned_integer(8)));
 
 	staticdb::memory_storage storage;
+	{
+		//build an array in the storage
+		auto writer = staticdb::make_bits_to_byte_sink(Si::make_container_sink(storage.memory));
+		staticdb::values::serialize(writer, staticdb::values::value(staticdb::values::make_unsigned_integer<std::uint64_t>(3)));
+		for (std::uint8_t i = 1; i <= 3; ++i)
+		{
+			staticdb::values::serialize(writer, staticdb::values::value(staticdb::values::make_unsigned_integer(i)));
+		}
+	}
+
 	expr::lambda element_equals_key(
 		Si::make_unique<expr::expression>(
 			expr::equals(
