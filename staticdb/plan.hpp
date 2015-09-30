@@ -326,7 +326,7 @@ namespace staticdb
 					for (address index = 0, length = array_length(array.begin); index < length; ++index)
 					{
 						pseudo_value<Storage> element = array_get(array.begin, index);
-						pseudo_value<Storage> is_good = execute_closure(predicate, element, bound);
+						pseudo_value<Storage> const is_good = execute_closure(predicate, element, bound);
 						if (!extract_bool(is_good))
 						{
 							continue;
