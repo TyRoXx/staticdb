@@ -69,6 +69,11 @@ namespace staticdb
 			{
 			}
 
+			explicit basic_tuple(std::vector<PseudoValue> elements)
+				: elements(std::move(elements))
+			{
+			}
+
 			basic_tuple copy() const
 			{
 				basic_tuple result;
@@ -257,6 +262,95 @@ namespace staticdb
 		}
 
 		template <class Storage>
+		pseudo_value<Storage> execute_closure(
+			pseudo_value<Storage> const &closure,
+			pseudo_value<Storage> const &argument_,
+			pseudo_value<Storage> const &bound_
+		)
+		{
+			boost::ignore_unused_variable_warning(closure);
+			boost::ignore_unused_variable_warning(argument_);
+			boost::ignore_unused_variable_warning(bound_);
+			throw std::logic_error("not implemented");
+		}
+
+		template <class Storage>
+		bool extract_bool(pseudo_value<Storage> const &boolean)
+		{
+			boost::ignore_unused_variable_warning(boolean);
+			throw std::logic_error("not implemented");
+		}
+
+		template <class Storage>
+		address deserialize_address(storage_pointer<Storage> const &begin)
+		{
+			address result = 0;
+			const std::size_t address_size_in_bytes = 8;
+			BOOST_STATIC_ASSERT(sizeof(result) == address_size_in_bytes);
+			auto byte_source = begin.storage->read_at(begin.where);
+			for (std::size_t i = 0; i < address_size_in_bytes; ++i)
+			{
+				Si::optional<byte> digit = Si::get(byte_source);
+				if (!digit)
+				{
+					throw std::invalid_argument("deserialize_address needs more bytes");
+				}
+				result |= (*digit << (address_size_in_bytes - 1 - i));
+			}
+			return result;
+		}
+
+		template <class Storage>
+		address array_length(storage_pointer<Storage> const &array_begin)
+		{
+			address length = deserialize_address(array_begin);
+			return length;
+		}
+
+		template <class Storage>
+		pseudo_value<Storage> array_get(storage_pointer<Storage> const &array_begin, address index)
+		{
+			boost::ignore_unused_variable_warning(array_begin);
+			boost::ignore_unused_variable_warning(index);
+			throw std::logic_error("not implemented");
+		}
+
+		template <class Storage>
+		pseudo_value<Storage> run_filter(pseudo_value<Storage> const &container, pseudo_value<Storage> const &predicate, pseudo_value<Storage> const &bound)
+		{
+			return Si::visit<pseudo_value<Storage>>(
+				container,
+				[&predicate, &bound](basic_array_accessor<Storage> const &array) -> pseudo_value<Storage>
+				{
+					std::vector<pseudo_value<Storage>> results;
+					for (address index = 0, length = array_length(array.begin); index < length; ++index)
+					{
+						pseudo_value<Storage> element = array_get(array.begin, index);
+						pseudo_value<Storage> is_good = execute_closure(predicate, element, bound);
+						if (!extract_bool(is_good))
+						{
+							continue;
+						}
+						results.emplace_back(std::move(element));
+					}
+					return pseudo_value<Storage>(basic_tuple<pseudo_value<Storage>>(std::move(results)));
+				},
+				[](basic_tuple<pseudo_value<Storage>> const &) -> pseudo_value<Storage>
+				{
+					throw std::logic_error("not implemented");
+				},
+				[](basic_closure<pseudo_value<Storage>> const &) -> pseudo_value<Storage>
+				{
+					throw std::invalid_argument("run_filter called on a closure");
+				},
+				[](values::value const &) -> pseudo_value<Storage>
+				{
+					throw std::logic_error("not implemented");
+				}
+			);
+		}
+
+		template <class Storage>
 		pseudo_value<Storage> execute(
 			expressions::expression const &program,
 			pseudo_value<Storage> const &argument_,
@@ -313,7 +407,7 @@ namespace staticdb
 				{
 					value_type const input = execute(*filter_.input, argument_, bound_);
 					value_type const predicate = execute(*filter_.predicate, argument_, bound_);
-					throw std::logic_error("not implemented");
+					return run_filter(input, predicate, bound_);
 				},
 				[](expressions::equals const &) -> value_type
 				{
