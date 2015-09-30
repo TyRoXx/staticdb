@@ -65,12 +65,32 @@ namespace staticdb
 		{
 			std::vector<PseudoValue> elements;
 
+			basic_tuple()
+			{
+			}
+
 			basic_tuple copy() const
 			{
 				basic_tuple result;
 				result.elements = expressions::detail::copy(elements);
 				return result;
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_tuple)
+#else
+			basic_tuple(basic_tuple &&other) BOOST_NOEXCEPT
+				: elements(std::move(other.elements))
+			{
+			}
+
+			basic_tuple &operator = (basic_tuple &&other) BOOST_NOEXCEPT
+			{
+				elements = std::move(other.elements);
+				return *this;
+			}
+#endif
+				SILICIUM_DISABLE_COPY(basic_tuple)
 		};
 
 		template <class PseudoValue>
@@ -79,6 +99,10 @@ namespace staticdb
 			std::unique_ptr<expressions::expression> body;
 			std::unique_ptr<PseudoValue> bound;
 
+			basic_closure()
+			{
+			}
+
 			basic_closure copy() const
 			{
 				basic_closure result;
@@ -86,24 +110,42 @@ namespace staticdb
 				result.bound = Si::to_unique(bound->copy());
 				return result;
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_closure)
+#else
+			basic_closure(basic_closure &&other) BOOST_NOEXCEPT
+				: body(std::move(other.body))
+				, bound(std::move(other.bound))
+			{
+			}
+
+			basic_closure &operator = (basic_closure &&other) BOOST_NOEXCEPT
+			{
+				body = std::move(other.body);
+				bound = std::move(other.bound);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_closure)
 		};
 
 		template <class Storage>
-		struct pseudo_value : Si::variant<
+		struct pseudo_value : Si::non_copyable_variant<
+			values::value,
 			basic_array_accessor<Storage>,
 			basic_tuple<pseudo_value<Storage>>,
-			basic_closure<pseudo_value<Storage>>,
-			values::value
+			basic_closure<pseudo_value<Storage>>
 		>
 		{
-			typedef Si::variant<
+			typedef Si::non_copyable_variant<
+				values::value,
 				basic_array_accessor<Storage>,
 				basic_tuple<pseudo_value<Storage>>,
-				basic_closure<pseudo_value<Storage>>,
-				values::value
+				basic_closure<pseudo_value<Storage>>
 			> base;
 
-			template <class A0>
+			template <class A0, class = std::enable_if<!std::is_same<std::decay<A0>::type, pseudo_value<Storage>>::value, void>::type>
 			pseudo_value(A0 &&a0)
 				: base(std::forward<A0>(a0))
 			{
@@ -192,7 +234,7 @@ namespace staticdb
 					{
 						throw std::invalid_argument("tuple_at called with index out of range");
 					}
-					return indirect_tuple.elements[index_int].copy();
+					return indirect_tuple.elements[static_cast<size_t>(index_int)].copy();
 				},
 				[](basic_closure<pseudo_value<Storage>> const &) -> pseudo_value<Storage>
 				{
@@ -209,7 +251,7 @@ namespace staticdb
 					{
 						throw std::invalid_argument("tuple_at called with index out of range");
 					}
-					return pseudo_value<Storage>(direct_tuple->elements[index_int].copy());
+					return pseudo_value<Storage>(direct_tuple->elements[static_cast<size_t>(index_int)].copy());
 				}
 			);
 		}
