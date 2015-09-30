@@ -145,7 +145,7 @@ namespace staticdb
 				basic_closure<pseudo_value<Storage>>
 			> base;
 
-			template <class A0, class = std::enable_if<!std::is_same<std::decay<A0>::type, pseudo_value<Storage>>::value, void>::type>
+			template <class A0, class = typename std::enable_if<!std::is_same<typename std::decay<A0>::type, pseudo_value<Storage>>::value, void>::type>
 			pseudo_value(A0 &&a0)
 				: base(std::forward<A0>(a0))
 			{
