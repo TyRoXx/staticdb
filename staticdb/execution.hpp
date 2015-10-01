@@ -38,6 +38,24 @@ namespace staticdb
 			{
 				return basic_array_accessor(begin, element_layout.copy());
 			}
+
+#if SILICIUM_COMPILER_GENERATES_MOVES
+			SILICIUM_DEFAULT_MOVE(basic_array_accessor)
+#else
+			basic_array_accessor(basic_array_accessor &&other) BOOST_NOEXCEPT
+				: begin(other.begin)
+				, element_layout(std::move(other.element_layout))
+			{
+			}
+
+			basic_array_accessor &operator = (basic_array_accessor &&other) BOOST_NOEXCEPT
+			{
+				begin = other.begin;
+				element_layout = std::move(other.element_layout);
+				return *this;
+			}
+#endif
+			SILICIUM_DISABLE_COPY(basic_array_accessor)
 		};
 
 		template <class PseudoValue>
@@ -75,7 +93,7 @@ namespace staticdb
 				return *this;
 			}
 #endif
-				SILICIUM_DISABLE_COPY(basic_tuple)
+			SILICIUM_DISABLE_COPY(basic_tuple)
 		};
 
 		template <class PseudoValue>
