@@ -318,7 +318,7 @@ namespace staticdb
 				},
 				[](layouts::tuple const &) -> pseudo_value<Storage>
 				{
-				throw std::logic_error("not implemented");
+					throw std::logic_error("not implemented");
 				},
 				[](layouts::array const &) -> pseudo_value<Storage>
 				{
