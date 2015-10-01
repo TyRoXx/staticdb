@@ -2,6 +2,7 @@
 #define STATICDB_VALUES_HPP
 
 #include <staticdb/types.hpp>
+#include <staticdb/copy.hpp>
 #include <silicium/variant.hpp>
 #include <silicium/to_unique.hpp>
 #include <silicium/sink/append.hpp>
@@ -176,21 +177,6 @@ namespace staticdb
 			SILICIUM_DISABLE_COPY(basic_closure)
 		};
 
-		namespace detail
-		{
-			template <class Result>
-			struct copying_visitor
-			{
-				typedef Result result_type;
-
-				template <class T>
-				Result operator()(T const &value) const
-				{
-					return value.copy();
-				}
-			};
-		}
-
 		template <class Value>
 		struct make_value_type
 		{
@@ -229,7 +215,7 @@ namespace staticdb
 
 			value copy() const
 			{
-				return as_variant().apply_visitor(detail::copying_visitor<value>());
+				return as_variant().apply_visitor(copying_visitor<value>());
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES

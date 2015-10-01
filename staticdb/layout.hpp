@@ -2,6 +2,8 @@
 #define STATICDB_LAYOUT_HPP
 
 #include <staticdb/types.hpp>
+#include <staticdb/storage.hpp>
+#include <staticdb/copy.hpp>
 #include <silicium/to_unique.hpp>
 
 namespace staticdb
@@ -12,6 +14,10 @@ namespace staticdb
 
 		struct unit
 		{
+			unit copy() const
+			{
+				return unit();
+			}
 		};
 
 		struct tuple
@@ -21,6 +27,11 @@ namespace staticdb
 			explicit tuple(std::vector<layout> elements)
 				: elements(std::move(elements))
 			{
+			}
+
+			tuple copy() const
+			{
+				return tuple(staticdb::copy(elements));
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
@@ -49,6 +60,8 @@ namespace staticdb
 			{
 			}
 
+			array copy() const;
+
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(array)
 #else
@@ -74,6 +87,11 @@ namespace staticdb
 				: length(length)
 			{
 			}
+
+			bitset copy() const
+			{
+				return *this;
+			}
 		};
 
 		struct variant
@@ -83,6 +101,11 @@ namespace staticdb
 			explicit variant(std::vector<layout> possibilities)
 				: possibilities(std::move(possibilities))
 			{
+			}
+
+			variant copy() const
+			{
+				return variant(staticdb::copy(possibilities));
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
@@ -122,6 +145,11 @@ namespace staticdb
 				return *this;
 			}
 
+			layout copy() const
+			{
+				return as_variant().apply_visitor(copying_visitor<layout>());
+			}
+
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(layout)
 #else
@@ -138,6 +166,11 @@ namespace staticdb
 #endif
 			SILICIUM_DISABLE_COPY(layout)
 		};
+
+		inline array array::copy() const
+		{
+			return array(Si::to_unique(element->copy()));
+		}
 
 		bool operator == (layout const &left, layout const &right);
 
@@ -211,6 +244,38 @@ namespace staticdb
 		inline std::ostream &operator << (std::ostream &out, layout const &value)
 		{
 			return out << value.as_variant();
+		}
+
+		inline address layout_size_in_bits(layout const &wanted)
+		{
+			return Si::visit<address>(
+				wanted.as_variant(),
+				[](unit) -> address
+				{
+					return 0;
+				},
+				[](tuple const &tuple_) -> address
+				{
+					address sum = 0;
+					for (layout const &element : tuple_.elements)
+					{
+						sum += layout_size_in_bits(element);
+					}
+					return sum;
+				},
+				[](array const &) -> address
+				{
+					throw std::logic_error("not implemented");
+				},
+				[](bitset const &bitset_) -> address
+				{
+					return bitset_.length;
+				},
+				[](variant const &) -> address
+				{
+					throw std::logic_error("not implemented");
+				}
+			);
 		}
 
 		inline layout calculate(types::type const &root)

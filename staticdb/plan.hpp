@@ -32,19 +32,40 @@ namespace staticdb
 	template <class Storage>
 	inline values::value run_getter(Storage &storage, get_function const &get, values::value const &argument, layouts::layout const &root)
 	{
-		boost::ignore_unused_variable_warning(root);
 		typedef execution::pseudo_value<Storage> pseudo_value;
-		execution::basic_array_accessor<Storage> root_array(execution::storage_pointer<Storage>(storage, 0));
-		execution::basic_tuple<pseudo_value> get_argument;
-		get_argument.elements.emplace_back(root_array);
-		get_argument.elements.emplace_back(argument.copy());
-		pseudo_value result = execution::execute(get, pseudo_value(std::move(get_argument)), pseudo_value(values::value(values::unit())));
-		values::value * const finite_result = Si::try_get_ptr<values::value>(result);
-		if (!finite_result)
-		{
-			throw std::runtime_error("not implemented");
-		}
-		return std::move(*finite_result);
+		return Si::visit<values::value>(
+			root.as_variant(),
+			[](layouts::unit) -> values::value
+			{
+				throw std::logic_error("not implemented");
+			},
+			[](layouts::tuple const &) -> values::value
+			{
+				throw std::logic_error("not implemented");
+			},
+			[&storage, &get, &argument](layouts::array const &array_layout) -> values::value
+			{
+				execution::basic_array_accessor<Storage> root_array(execution::storage_pointer<Storage>(storage, 0), array_layout.element->copy());
+				execution::basic_tuple<pseudo_value> get_argument;
+				get_argument.elements.emplace_back(std::move(root_array));
+				get_argument.elements.emplace_back(argument.copy());
+				pseudo_value result = execution::execute(get, pseudo_value(std::move(get_argument)), pseudo_value(values::value(values::unit())));
+				values::value * const finite_result = Si::try_get_ptr<values::value>(result);
+				if (!finite_result)
+				{
+					throw std::runtime_error("not implemented");
+				}
+				return std::move(*finite_result);
+			},
+			[](layouts::bitset const &) -> values::value
+			{
+				throw std::logic_error("not implemented");
+			},
+			[](layouts::variant const &) -> values::value
+			{
+				throw std::logic_error("not implemented");
+			}
+		);
 	}
 
 	template <class Storage>

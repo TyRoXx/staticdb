@@ -2,6 +2,7 @@
 #define STATICDB_EXECUTION_HPP
 
 #include <staticdb/expressions.hpp>
+#include <staticdb/layout.hpp>
 #include <staticdb/storage.hpp>
 
 namespace staticdb
@@ -25,15 +26,17 @@ namespace staticdb
 		struct basic_array_accessor
 		{
 			storage_pointer<Storage> begin;
+			layouts::layout element_layout;
 
-			explicit basic_array_accessor(storage_pointer<Storage> begin)
+			explicit basic_array_accessor(storage_pointer<Storage> begin, layouts::layout element_layout)
 				: begin(begin)
+				, element_layout(std::move(element_layout))
 			{
 			}
 
 			basic_array_accessor copy() const
 			{
-				return *this;
+				return basic_array_accessor(begin, element_layout.copy());
 			}
 		};
 
@@ -54,7 +57,7 @@ namespace staticdb
 			basic_tuple copy() const
 			{
 				basic_tuple result;
-				result.elements = expressions::detail::copy(elements);
+				result.elements = staticdb::copy(elements);
 				return result;
 			}
 
@@ -145,7 +148,7 @@ namespace staticdb
 
 			pseudo_value copy() const
 			{
-				return as_variant().apply_visitor(values::detail::copying_visitor<pseudo_value>());
+				return as_variant().apply_visitor(copying_visitor<pseudo_value>());
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
@@ -258,11 +261,12 @@ namespace staticdb
 			throw std::logic_error("not implemented");
 		}
 
+		const std::size_t address_size_in_bytes = 8;
+
 		template <class Storage>
 		address deserialize_address(storage_pointer<Storage> const &begin)
 		{
 			address result = 0;
-			const std::size_t address_size_in_bytes = 8;
 			BOOST_STATIC_ASSERT(sizeof(result) == address_size_in_bytes);
 			auto byte_source = begin.storage->read_at(begin.where);
 			for (std::size_t i = 0; i < address_size_in_bytes; ++i)
@@ -285,11 +289,41 @@ namespace staticdb
 		}
 
 		template <class Storage>
-		pseudo_value<Storage> array_get(storage_pointer<Storage> const &array_begin, address index)
+		pseudo_value<Storage> access_value(storage_pointer<Storage> const &element_begin, layouts::layout const &element_layout)
 		{
-			boost::ignore_unused_variable_warning(array_begin);
-			boost::ignore_unused_variable_warning(index);
-			throw std::logic_error("not implemented");
+			boost::ignore_unused_variable_warning(element_begin);
+			return Si::visit<pseudo_value<Storage>>(
+				element_layout.as_variant(),
+				[](layouts::unit) -> pseudo_value<Storage>
+				{
+					throw std::logic_error("not implemented");
+				},
+				[](layouts::tuple const &) -> pseudo_value<Storage>
+				{
+				throw std::logic_error("not implemented");
+				},
+				[](layouts::array const &) -> pseudo_value<Storage>
+				{
+					throw std::logic_error("not implemented");
+				},
+				[](layouts::bitset const &) -> pseudo_value<Storage>
+				{
+					throw std::logic_error("not implemented");
+				},
+				[](layouts::variant const &) -> pseudo_value<Storage>
+				{
+					throw std::logic_error("not implemented");
+				}
+			);
+		}
+
+		template <class Storage>
+		pseudo_value<Storage> array_get(storage_pointer<Storage> const &array_begin, address index, layouts::layout const &element)
+		{
+			address first_element = array_begin.where + (address_size_in_bytes * 8);
+			address element_size_in_bits = layout_size_in_bits(element);
+			address wanted_element = first_element + (element_size_in_bits * index);
+			return access_value(storage_pointer<Storage>(*array_begin.storage, wanted_element), element);
 		}
 
 		template <class Storage>
@@ -302,7 +336,7 @@ namespace staticdb
 					std::vector<pseudo_value<Storage>> results;
 					for (address index = 0, length = array_length(array.begin); index < length; ++index)
 					{
-						pseudo_value<Storage> element = array_get(array.begin, index);
+						pseudo_value<Storage> element = array_get(array.begin, index, array.element_layout);
 						pseudo_value<Storage> const is_good = execute_closure(predicate, element, bound);
 						if (!extract_bool(is_good))
 						{

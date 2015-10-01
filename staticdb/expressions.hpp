@@ -58,21 +58,6 @@ namespace staticdb
 			}
 		};
 
-		namespace detail
-		{
-			template <class ExplicitlyCopyable>
-			std::vector<ExplicitlyCopyable> copy(std::vector<ExplicitlyCopyable> const &v)
-			{
-				std::vector<ExplicitlyCopyable> result;
-				result.reserve(v.size());
-				for (ExplicitlyCopyable const &e : v)
-				{
-					result.emplace_back(e.copy());
-				}
-				return result;
-			}
-		}
-
 		template <class Expression>
 		struct basic_make_tuple
 		{
@@ -85,7 +70,7 @@ namespace staticdb
 
 			basic_make_tuple copy() const
 			{
-				return basic_make_tuple(detail::copy(elements));
+				return basic_make_tuple(staticdb::copy(elements));
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
@@ -240,7 +225,7 @@ namespace staticdb
 
 			basic_call copy() const
 			{
-				return basic_call(Si::to_unique(function->copy()), detail::copy(arguments));
+				return basic_call(Si::to_unique(function->copy()), staticdb::copy(arguments));
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
@@ -373,7 +358,7 @@ namespace staticdb
 
 			expression copy() const
 			{
-				return as_variant().apply_visitor(values::detail::copying_visitor<expression>());
+				return as_variant().apply_visitor(copying_visitor<expression>());
 			}
 			
 #if SILICIUM_COMPILER_GENERATES_MOVES
