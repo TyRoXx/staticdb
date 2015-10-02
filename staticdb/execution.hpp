@@ -4,6 +4,7 @@
 #include <staticdb/expressions.hpp>
 #include <staticdb/layout.hpp>
 #include <staticdb/storage.hpp>
+#include <staticdb/bit_source.hpp>
 
 namespace staticdb
 {
@@ -309,7 +310,6 @@ namespace staticdb
 		template <class Storage>
 		pseudo_value<Storage> access_value(storage_pointer<Storage> const &element_begin, layouts::layout const &element_layout)
 		{
-			boost::ignore_unused_variable_warning(element_begin);
 			return Si::visit<pseudo_value<Storage>>(
 				element_layout.as_variant(),
 				[](layouts::unit) -> pseudo_value<Storage>
@@ -324,9 +324,23 @@ namespace staticdb
 				{
 					throw std::logic_error("not implemented");
 				},
-				[](layouts::bitset const &) -> pseudo_value<Storage>
+				[&element_begin](layouts::bitset const &bitset_) -> pseudo_value<Storage>
 				{
-					throw std::logic_error("not implemented");
+					std::vector<values::value> bits;
+					bits.reserve(bitset_.length);
+					assert(element_begin.where % 8 == 0);
+					auto byte_reader = element_begin.storage->read_at(element_begin.where / 8);
+					auto bit_reader = make_byte_to_bit_source(byte_reader);
+					for (size_t i = 0; i < bitset_.length; ++i)
+					{
+						Si::optional<values::bit> const bit_read = Si::get(bit_reader);
+						if (!bit_read)
+						{
+							throw std::logic_error("not implemented");
+						}
+						bits.emplace_back(*bit_read);
+					}
+					return pseudo_value<Storage>(values::value(values::tuple(std::move(bits))));
 				},
 				[](layouts::variant const &) -> pseudo_value<Storage>
 				{
