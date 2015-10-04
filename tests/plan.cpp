@@ -58,8 +58,8 @@ BOOST_AUTO_TEST_CASE(find_uint_in_array_plan)
 	BOOST_CHECK_EQUAL(1u, planned.gets.size());
 	BOOST_CHECK(planned.sets.empty());
 
-#if 0
 	staticdb::values::value const found = planned.gets[0](storage, staticdb::values::value(staticdb::values::make_unsigned_integer<std::uint8_t>(2)));
-	//TODO: check result
-#endif
+	std::vector<staticdb::values::value> result_set;
+	result_set.emplace_back(staticdb::values::make_unsigned_integer<std::uint8_t>(2));
+	BOOST_CHECK_EQUAL(staticdb::values::value(staticdb::values::tuple(std::move(result_set))), found);
 }

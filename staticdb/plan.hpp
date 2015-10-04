@@ -49,13 +49,9 @@ namespace staticdb
 				execution::basic_tuple<pseudo_value> get_argument;
 				get_argument.elements.emplace_back(std::move(root_array));
 				get_argument.elements.emplace_back(argument.copy());
-				pseudo_value result = execution::execute(get, pseudo_value(std::move(get_argument)), pseudo_value(values::value(values::unit())));
-				values::value * const finite_result = Si::try_get_ptr<values::value>(result);
-				if (!finite_result)
-				{
-					throw std::runtime_error("not implemented");
-				}
-				return std::move(*finite_result);
+				pseudo_value const complex_result = execution::execute(get, pseudo_value(std::move(get_argument)), pseudo_value(values::value(values::unit())));
+				values::value simple_result = execution::reduce_value(complex_result);
+				return simple_result;
 			},
 			[](layouts::bitset const &) -> values::value
 			{

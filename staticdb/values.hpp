@@ -21,6 +21,11 @@ namespace staticdb
 			}
 		};
 
+		inline std::ostream &operator << (std::ostream &out, unit)
+		{
+			return out << "unit";
+		}
+
 		struct bit
 		{
 			bool is_set;
@@ -39,6 +44,16 @@ namespace staticdb
 				return *this;
 			}
 		};
+
+		inline bool operator == (bit left, bit right)
+		{
+			return left.is_set == right.is_set;
+		}
+
+		inline std::ostream &operator << (std::ostream &out, bit value)
+		{
+			return out << value.is_set;
+		}
 
 		template <class Value>
 		struct basic_tuple
@@ -83,6 +98,23 @@ namespace staticdb
 		};
 
 		template <class Value>
+		bool operator == (basic_tuple<Value> const &left, basic_tuple<Value> const &right)
+		{
+			return left.elements == right.elements;
+		}
+
+		template <class Value>
+		inline std::ostream &operator << (std::ostream &out, basic_tuple<Value> const &value)
+		{
+			out << "{";
+			for (auto &element : value.elements)
+			{
+				out << element << ", ";
+			}
+			return out << "}";
+		}
+
+		template <class Value>
 		struct basic_variant
 		{
 			std::unique_ptr<Value> content;
@@ -121,6 +153,12 @@ namespace staticdb
 #endif
 			SILICIUM_DISABLE_COPY(basic_variant)
 		};
+
+		template <class Value>
+		inline std::ostream &operator << (std::ostream &out, basic_variant<Value> const &value)
+		{
+			return out << *value.content;
+		}
 
 		struct closure_body
 		{
@@ -176,6 +214,12 @@ namespace staticdb
 #endif
 			SILICIUM_DISABLE_COPY(basic_closure)
 		};
+
+		template <class Value>
+		inline std::ostream &operator << (std::ostream &out, basic_closure<Value> const &value)
+		{
+			return out << "closure(" << *value.bound << ")";
+		}
 
 		template <class Value>
 		struct make_value_type
@@ -238,6 +282,40 @@ namespace staticdb
 		typedef basic_tuple<value> tuple;
 		typedef basic_variant<value> variant;
 		typedef basic_closure<value> closure;
+
+		inline bool operator == (value const &first, value const &second)
+		{
+			return Si::visit<bool>(
+				first,
+				[&second](unit) -> bool
+				{
+					return Si::try_get_ptr<unit>(second) != nullptr;
+				},
+				[&second](bit first_bit) -> bool
+				{
+					bit const * const second_bit = Si::try_get_ptr<bit>(second);
+					return second_bit && (*second_bit == first_bit);
+				},
+				[&second](tuple const &first_tuple) -> bool
+				{
+					tuple const * const second_tuple = Si::try_get_ptr<tuple>(second);
+					return second_tuple && (*second_tuple == first_tuple);
+				},
+				[](variant const &) -> bool
+				{
+					throw std::logic_error("not implemented");
+				},
+				[](closure const &) -> bool
+				{
+					throw std::logic_error("not implemented");
+				}
+			);
+		}
+
+		inline std::ostream &operator << (std::ostream &out, value const &v)
+		{
+			return out << v.as_variant();
+		}
 
 		template <class Unsigned>
 		inline tuple make_unsigned_integer(Unsigned value)

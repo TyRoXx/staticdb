@@ -458,9 +458,12 @@ namespace staticdb
 				{
 					throw std::logic_error("not implemented");
 				},
-				[](equals const &) -> values::value
+				[&argument_, &bound_](equals const &equals_) -> values::value
 				{
-					throw std::logic_error("not implemented");
+					values::value const first = execute(*equals_.first, argument_, bound_);
+					values::value const second = execute(*equals_.second, argument_, bound_);
+					bool const equal = (first == second);
+					return values::value(values::bit(equal));
 				}
 			);
 		}

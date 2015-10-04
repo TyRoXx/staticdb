@@ -261,6 +261,36 @@ namespace staticdb
 		}
 
 		template <class Storage>
+		values::value reduce_value(pseudo_value<Storage> const &complex_value)
+		{
+			return Si::visit<values::value>(
+				complex_value,
+				[](basic_array_accessor<Storage> const &) -> values::value
+				{
+					throw std::logic_error("not implemented");
+				},
+				[](basic_tuple<pseudo_value<Storage>> const &tuple) -> values::value
+				{
+					std::vector<values::value> simple_elements;
+					simple_elements.reserve(tuple.elements.size());
+					for (pseudo_value<Storage> const &element : tuple.elements)
+					{
+						simple_elements.emplace_back(reduce_value(element));
+					}
+					return values::value(values::tuple(std::move(simple_elements)));
+				},
+				[](basic_closure<pseudo_value<Storage>> const &) -> values::value
+				{
+					throw std::invalid_argument("Cannot reduce closure to a simple value");
+				},
+				[](values::value const &direct_value) -> values::value
+				{
+					return direct_value.copy();
+				}
+			);
+		}
+
+		template <class Storage>
 		pseudo_value<Storage> execute_closure(
 			pseudo_value<Storage> const &maybe_closure,
 			pseudo_value<Storage> const &argument_
@@ -289,8 +319,17 @@ namespace staticdb
 		template <class Storage>
 		bool extract_bool(pseudo_value<Storage> const &boolean)
 		{
-			boost::ignore_unused_variable_warning(boolean);
-			throw std::logic_error("not implemented");
+			values::value const * const simple_value = Si::try_get_ptr<values::value>(boolean);
+			if (!simple_value)
+			{
+				throw std::logic_error("not implemented");
+			}
+			values::bit const * const bit = Si::try_get_ptr<values::bit>(simple_value->as_variant());
+			if (!bit)
+			{
+				throw std::logic_error("not implemented");
+			}
+			return bit->is_set;
 		}
 
 		const std::size_t address_size_in_bytes = 8;
