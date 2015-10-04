@@ -241,7 +241,11 @@ namespace staticdb
 			{
 			}
 
-			template <class A0, class ...Args>
+			template <class A0, class ...Args
+#ifdef _MSC_VER
+				, class = typename std::enable_if<!std::is_same<typename std::decay<A0>::type, value>::value, void>::type
+#endif
+			>
 			value(A0 &&a0, Args &&...args)
 				: base(std::forward<A0>(a0), std::forward<Args>(args)...)
 			{
