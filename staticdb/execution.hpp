@@ -262,15 +262,28 @@ namespace staticdb
 
 		template <class Storage>
 		pseudo_value<Storage> execute_closure(
-			pseudo_value<Storage> const &closure,
-			pseudo_value<Storage> const &argument_,
-			pseudo_value<Storage> const &bound_
+			pseudo_value<Storage> const &maybe_closure,
+			pseudo_value<Storage> const &argument_
 		)
 		{
-			boost::ignore_unused_variable_warning(closure);
-			boost::ignore_unused_variable_warning(argument_);
-			boost::ignore_unused_variable_warning(bound_);
-			throw std::logic_error("not implemented");
+			typedef pseudo_value<Storage> value_type;
+			typedef execution::basic_closure<value_type> closure_type;
+			closure_type const * const is_closure = Si::try_get_ptr<closure_type>(maybe_closure);
+			if (!is_closure)
+			{
+				throw std::logic_error("not implemented");
+			}
+			values::value const * const simple_argument = Si::try_get_ptr<values::value>(argument_);
+			if (!simple_argument)
+			{
+				throw std::logic_error("not implemented");
+			}
+			values::value const * const simple_bound = Si::try_get_ptr<values::value>(*is_closure->bound);
+			if (!simple_bound)
+			{
+				throw std::logic_error("not implemented");
+			}
+			return expressions::execute(*is_closure->body, *simple_argument, *simple_bound);
 		}
 
 		template <class Storage>
@@ -359,17 +372,17 @@ namespace staticdb
 		}
 
 		template <class Storage>
-		pseudo_value<Storage> run_filter(pseudo_value<Storage> const &container, pseudo_value<Storage> const &predicate, pseudo_value<Storage> const &bound)
+		pseudo_value<Storage> run_filter(pseudo_value<Storage> const &container, pseudo_value<Storage> const &predicate)
 		{
 			return Si::visit<pseudo_value<Storage>>(
 				container,
-				[&predicate, &bound](basic_array_accessor<Storage> const &array) -> pseudo_value<Storage>
+				[&predicate](basic_array_accessor<Storage> const &array) -> pseudo_value<Storage>
 				{
 					std::vector<pseudo_value<Storage>> results;
 					for (address index = 0, length = array_length(array.begin); index < length; ++index)
 					{
 						pseudo_value<Storage> element = array_get(array.begin, index, array.element_layout);
-						pseudo_value<Storage> const is_good = execute_closure(predicate, element, bound);
+						pseudo_value<Storage> const is_good = execute_closure(predicate, element);
 						if (!extract_bool(is_good))
 						{
 							continue;
@@ -450,7 +463,7 @@ namespace staticdb
 				{
 					value_type const input = execute(*filter_.input, argument_, bound_);
 					value_type const predicate = execute(*filter_.predicate, argument_, bound_);
-					return run_filter(input, predicate, bound_);
+					return run_filter(input, predicate);
 				},
 				[](expressions::equals const &) -> value_type
 				{
