@@ -216,7 +216,7 @@ namespace staticdb
 					{
 						throw std::invalid_argument("extract_address called on not-a-tuple");
 					}
-					Si::optional<address> parsed = values::parse_unsigned_integer<address>(*direct_tuple);
+					Si::optional<address::value_type> parsed = values::parse_unsigned_integer<address::value_type>(*direct_tuple);
 					if (!parsed)
 					{
 						throw std::invalid_argument("extract_address called with non-bitset or too long tuple");
@@ -238,11 +238,11 @@ namespace staticdb
 				},
 				[index_int](basic_tuple<pseudo_value<Storage>> const &indirect_tuple) -> pseudo_value<Storage>
 				{
-					if (index_int >= indirect_tuple.elements.size())
+					if (index_int.value >= indirect_tuple.elements.size())
 					{
 						throw std::invalid_argument("tuple_at called with index out of range");
 					}
-					return indirect_tuple.elements[static_cast<size_t>(index_int)].copy();
+					return indirect_tuple.elements[static_cast<size_t>(index_int.value)].copy();
 				},
 				[](basic_closure<pseudo_value<Storage>> const &) -> pseudo_value<Storage>
 				{
@@ -255,11 +255,11 @@ namespace staticdb
 					{
 						throw std::invalid_argument("tuple_at called on not-a-tuple");
 					}
-					if (index_int >= direct_tuple->elements.size())
+					if (index_int.value >= direct_tuple->elements.size())
 					{
 						throw std::invalid_argument("tuple_at called with index out of range");
 					}
-					return pseudo_value<Storage>(direct_tuple->elements[static_cast<size_t>(index_int)].copy());
+					return pseudo_value<Storage>(direct_tuple->elements[static_cast<size_t>(index_int.value)].copy());
 				}
 			);
 		}
@@ -336,22 +336,22 @@ namespace staticdb
 			return bit->is_set;
 		}
 
-		const std::size_t address_size_in_bytes = 8;
+		const address address_size_in_bytes(8);
 
 		template <class Storage>
 		address deserialize_address(storage_pointer<Storage> const &begin)
 		{
 			address result = 0;
-			BOOST_STATIC_ASSERT(sizeof(result) == address_size_in_bytes);
+			assert(sizeof(result) == address_size_in_bytes.value);
 			auto byte_source = begin.storage->read_at(begin.where);
-			for (std::size_t i = 0; i < address_size_in_bytes; ++i)
+			for (address::value_type i = 0; i < address_size_in_bytes.value; ++i)
 			{
 				Si::optional<byte> digit = Si::get(byte_source);
 				if (!digit)
 				{
 					throw std::invalid_argument("deserialize_address needs more bytes");
 				}
-				result |= (*digit << (address_size_in_bytes - 1 - i));
+				result.value |= (*digit << (address_size_in_bytes.value - 1 - i));
 			}
 			return result;
 		}
@@ -383,11 +383,11 @@ namespace staticdb
 				[&element_begin](layouts::bitset const &bitset_) -> pseudo_value<Storage>
 				{
 					std::vector<values::value> bits;
-					bits.reserve(bitset_.length);
-					assert(element_begin.where % 8 == 0);
-					auto byte_reader = element_begin.storage->read_at(element_begin.where / 8);
+					bits.reserve(bitset_.length.value);
+					assert(element_begin.where.value % 8 == 0);
+					auto byte_reader = element_begin.storage->read_at(*(element_begin.where / address(8)).value());
 					auto bit_reader = make_byte_to_bit_source(byte_reader);
-					for (size_t i = 0; i < bitset_.length; ++i)
+					for (address::value_type i = 0; i < bitset_.length.value; ++i)
 					{
 						Si::optional<values::bit> const bit_read = Si::get(bit_reader);
 						if (!bit_read)
@@ -406,43 +406,51 @@ namespace staticdb
 		}
 
 		template <class Storage>
-		pseudo_value<Storage> array_get(storage_pointer<Storage> const &array_begin, address index, layouts::layout const &element)
+		Si::optional<pseudo_value<Storage>> array_get(storage_pointer<Storage> const &array_begin, address index, layouts::layout const &element)
 		{
-			address first_element = array_begin.where + (address_size_in_bytes * 8);
-			address element_size_in_bits = layout_size_in_bits(element);
-			address wanted_element = first_element + (element_size_in_bits * index);
-			return access_value(storage_pointer<Storage>(*array_begin.storage, wanted_element), element);
+			Si::overflow_or<address> first_element = array_begin.where + (address_size_in_bytes * address(8));
+			Si::overflow_or<address> element_size_in_bits = layout_size_in_bits(element);
+			Si::overflow_or<address> wanted_element = first_element + (element_size_in_bits * index);
+			if (wanted_element.is_overflow())
+			{
+				return Si::none;
+			}
+			return access_value(storage_pointer<Storage>(*array_begin.storage, *wanted_element.value()), element);
 		}
 
 		template <class Storage>
-		pseudo_value<Storage> run_filter(pseudo_value<Storage> const &container, pseudo_value<Storage> const &predicate)
+		Si::optional<pseudo_value<Storage>> run_filter(pseudo_value<Storage> const &container, pseudo_value<Storage> const &predicate)
 		{
-			return Si::visit<pseudo_value<Storage>>(
+			return Si::visit<Si::optional<pseudo_value<Storage>>>(
 				container,
-				[&predicate](basic_array_accessor<Storage> const &array) -> pseudo_value<Storage>
+				[&predicate](basic_array_accessor<Storage> const &array) -> Si::optional<pseudo_value<Storage>>
 				{
 					std::vector<pseudo_value<Storage>> results;
-					for (address index = 0, length = array_length(array.begin); index < length; ++index)
+					for (address::value_type index = 0, length = array_length(array.begin).value; index < length; ++index)
 					{
-						pseudo_value<Storage> element = array_get(array.begin, index, array.element_layout);
-						pseudo_value<Storage> const is_good = execute_closure(predicate, element);
+						Si::optional<pseudo_value<Storage>> element = array_get(array.begin, index, array.element_layout);
+						if (!element)
+						{
+							return Si::none;
+						}
+						pseudo_value<Storage> const is_good = execute_closure(predicate, *element);
 						if (!extract_bool(is_good))
 						{
 							continue;
 						}
-						results.emplace_back(std::move(element));
+						results.emplace_back(std::move(*element));
 					}
 					return pseudo_value<Storage>(basic_tuple<pseudo_value<Storage>>(std::move(results)));
 				},
-				[](basic_tuple<pseudo_value<Storage>> const &) -> pseudo_value<Storage>
+				[](basic_tuple<pseudo_value<Storage>> const &) -> Si::optional<pseudo_value<Storage>>
 				{
 					throw std::logic_error("not implemented");
 				},
-				[](basic_closure<pseudo_value<Storage>> const &) -> pseudo_value<Storage>
+				[](basic_closure<pseudo_value<Storage>> const &) -> Si::optional<pseudo_value<Storage>>
 				{
 					throw std::invalid_argument("run_filter called on a closure");
 				},
-				[](values::value const &) -> pseudo_value<Storage>
+				[](values::value const &) -> Si::optional<pseudo_value<Storage>>
 				{
 					throw std::logic_error("not implemented");
 				}
@@ -450,65 +458,91 @@ namespace staticdb
 		}
 
 		template <class Storage>
-		pseudo_value<Storage> execute(
+		Si::optional<pseudo_value<Storage>> execute(
 			expressions::expression const &program,
 			pseudo_value<Storage> const &argument_,
 			pseudo_value<Storage> const &bound_)
 		{
 			typedef pseudo_value<Storage> value_type;
-			return Si::visit<value_type>(
+			return Si::visit<Si::optional<value_type>>(
 				program,
-				[](expressions::literal const &literal_) -> value_type
+				[](expressions::literal const &literal_) -> Si::optional<value_type>
 				{
 					return value_type(literal_.value.copy());
 				},
-				[&argument_](expressions::argument) -> value_type
+				[&argument_](expressions::argument) -> Si::optional<value_type>
 				{
 					return argument_.copy();
 				},
-				[&bound_](expressions::bound) -> value_type
+				[&bound_](expressions::bound) -> Si::optional<value_type>
 				{
 					return bound_.copy();
 				},
-				[&argument_, &bound_](expressions::make_tuple const &make_tuple_) -> value_type
+				[&argument_, &bound_](expressions::make_tuple const &make_tuple_) -> Si::optional<value_type>
 				{
 					basic_tuple<value_type> result;
 					result.elements.reserve(make_tuple_.elements.size());
 					for (expressions::expression const &element : make_tuple_.elements)
 					{
-						result.elements.emplace_back(execute(element, argument_, bound_));
+						Si::optional<value_type> evaluated_element = execute(element, argument_, bound_);
+						if (!evaluated_element)
+						{
+							return Si::none;
+						}
+						result.elements.emplace_back(std::move(*evaluated_element));
 					}
 					return value_type(std::move(result));
 				},
-				[&argument_, &bound_](expressions::tuple_at const &tuple_at_) -> value_type
+				[&argument_, &bound_](expressions::tuple_at const &tuple_at_) -> Si::optional<value_type>
 				{
-					value_type const tuple_ = execute(*tuple_at_.tuple, argument_, bound_);
-					value_type const index = execute(*tuple_at_.index, argument_, bound_);
-					value_type element = tuple_at(tuple_, index);
+					Si::optional<value_type> const tuple_ = execute(*tuple_at_.tuple, argument_, bound_);
+					if (!tuple_)
+					{
+						return Si::none;
+					}
+					Si::optional<value_type> const index = execute(*tuple_at_.index, argument_, bound_);
+					if (!index)
+					{
+						return Si::none;
+					}
+					Si::optional<value_type> element = tuple_at(*tuple_, *index);
 					return element;
 				},
-				[&argument_](expressions::branch const &) -> value_type
+				[&argument_](expressions::branch const &) -> Si::optional<value_type>
 				{
 					throw std::logic_error("not implemented");
 				},
-				[&argument_, &bound_](expressions::lambda const &lambda_) -> value_type
+				[&argument_, &bound_](expressions::lambda const &lambda_) -> Si::optional<value_type>
 				{
 					basic_closure<value_type> closure;
 					closure.body = Si::to_unique(lambda_.body->copy());
-					closure.bound = Si::to_unique(execute(*lambda_.bound, argument_, bound_));
+					Si::optional<value_type> bound = execute(*lambda_.bound, argument_, bound_);
+					if (!bound)
+					{
+						return Si::none;
+					}
+					closure.bound = Si::to_unique(std::move(*bound));
 					return value_type(std::move(closure));
 				},
-				[](expressions::call const &) -> value_type
+				[](expressions::call const &) -> Si::optional<value_type>
 				{
 					throw std::logic_error("not implemented");
 				},
-				[&argument_, &bound_](expressions::filter const &filter_) -> value_type
+				[&argument_, &bound_](expressions::filter const &filter_) -> Si::optional<value_type>
 				{
-					value_type const input = execute(*filter_.input, argument_, bound_);
-					value_type const predicate = execute(*filter_.predicate, argument_, bound_);
-					return run_filter(input, predicate);
+					Si::optional<value_type> const input = execute(*filter_.input, argument_, bound_);
+					if (!input)
+					{
+						return Si::none;
+					}
+					Si::optional<value_type> const predicate = execute(*filter_.predicate, argument_, bound_);
+					if (!predicate)
+					{
+						return Si::none;
+					}
+					return run_filter(*input, *predicate);
 				},
-				[](expressions::equals const &) -> value_type
+				[](expressions::equals const &) -> Si::optional<value_type>
 				{
 					throw std::logic_error("not implemented");
 				}

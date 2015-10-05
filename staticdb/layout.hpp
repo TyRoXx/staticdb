@@ -81,9 +81,9 @@ namespace staticdb
 
 		struct bitset
 		{
-			std::size_t length;
+			address length;
 
-			explicit bitset(std::size_t length)
+			explicit bitset(address length)
 				: length(length)
 			{
 			}
@@ -246,32 +246,32 @@ namespace staticdb
 			return out << value.as_variant();
 		}
 
-		inline address layout_size_in_bits(layout const &wanted)
+		inline Si::overflow_or<address> layout_size_in_bits(layout const &wanted)
 		{
-			return Si::visit<address>(
+			return Si::visit<Si::overflow_or<address>>(
 				wanted.as_variant(),
-				[](unit) -> address
+				[](unit) -> Si::overflow_or<address>
 				{
-					return 0;
+					return address(0);
 				},
-				[](tuple const &tuple_) -> address
+				[](tuple const &tuple_) -> Si::overflow_or<address>
 				{
-					address sum = 0;
+					Si::overflow_or<address> sum = address(0);
 					for (layout const &element : tuple_.elements)
 					{
-						sum += layout_size_in_bits(element);
+						sum = sum + layout_size_in_bits(element);
 					}
 					return sum;
 				},
-				[](array const &) -> address
+				[](array const &) -> Si::overflow_or<address>
 				{
 					throw std::logic_error("not implemented");
 				},
-				[](bitset const &bitset_) -> address
+				[](bitset const &bitset_) -> Si::overflow_or<address>
 				{
 					return bitset_.length;
 				},
-				[](variant const &) -> address
+				[](variant const &) -> Si::overflow_or<address>
 				{
 					throw std::logic_error("not implemented");
 				}
@@ -297,7 +297,7 @@ namespace staticdb
 				[](types::tuple const &tuple_type) -> layout
 				{
 					bool could_be_bitset = true;
-					std::size_t bits = 0;
+					Si::overflow_or<address> bits(address(0));
 					std::vector<layout> element_layouts;
 					for (types::type const &element : tuple_type.elements)
 					{
@@ -320,8 +320,8 @@ namespace staticdb
 								},
 								[&bits](bitset const &b)
 								{
-									bits += b.length;
-									return true;
+									bits = bits + b.length;
+									return !bits.is_overflow();
 								},
 								[](variant const &)
 								{
@@ -333,7 +333,8 @@ namespace staticdb
 					}
 					if (could_be_bitset)
 					{
-						return layout(bitset(bits));
+						assert(!bits.is_overflow());
+						return layout(bitset(*bits.value()));
 					}
 					return layout(tuple(std::move(element_layouts)));
 				},

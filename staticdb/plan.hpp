@@ -12,7 +12,7 @@ namespace staticdb
 	struct basic_plan
 	{
 		typedef Storage storage_type;
-		typedef Si::function<values::value (storage_type &, values::value const &)> planned_get_function;
+		typedef Si::function<Si::optional<values::value> (storage_type &, values::value const &)> planned_get_function;
 		typedef Si::function<values::value (storage_type &, values::value const &)> planned_set_function;
 
 		std::vector<planned_get_function> gets;
@@ -30,34 +30,38 @@ namespace staticdb
 	}
 
 	template <class Storage>
-	inline values::value run_getter(Storage &storage, get_function const &get, values::value const &argument, layouts::layout const &root)
+	inline Si::optional<values::value> run_getter(Storage &storage, get_function const &get, values::value const &argument, layouts::layout const &root)
 	{
 		typedef execution::pseudo_value<Storage> pseudo_value;
-		return Si::visit<values::value>(
+		return Si::visit<Si::optional<values::value>>(
 			root.as_variant(),
-			[](layouts::unit) -> values::value
+			[](layouts::unit) -> Si::optional<values::value>
 			{
 				throw std::logic_error("not implemented");
 			},
-			[](layouts::tuple const &) -> values::value
+			[](layouts::tuple const &) -> Si::optional<values::value>
 			{
 				throw std::logic_error("not implemented");
 			},
-			[&storage, &get, &argument](layouts::array const &array_layout) -> values::value
+			[&storage, &get, &argument](layouts::array const &array_layout) -> Si::optional<values::value>
 			{
 				execution::basic_array_accessor<Storage> root_array(execution::storage_pointer<Storage>(storage, 0), array_layout.element->copy());
 				execution::basic_tuple<pseudo_value> get_argument;
 				get_argument.elements.emplace_back(std::move(root_array));
 				get_argument.elements.emplace_back(argument.copy());
-				pseudo_value const complex_result = execution::execute(get, pseudo_value(std::move(get_argument)), pseudo_value(values::value(values::unit())));
-				values::value simple_result = execution::reduce_value(complex_result);
-				return simple_result;
+				Si::optional<pseudo_value> const complex_result = execution::execute(get, pseudo_value(std::move(get_argument)), pseudo_value(values::value(values::unit())));
+				if (!complex_result)
+				{
+					return Si::none;
+				}
+				values::value simple_result = execution::reduce_value(*complex_result);
+				return std::move(simple_result);
 			},
-			[](layouts::bitset const &) -> values::value
+			[](layouts::bitset const &) -> Si::optional<values::value>
 			{
 				throw std::logic_error("not implemented");
 			},
-			[](layouts::variant const &) -> values::value
+			[](layouts::variant const &) -> Si::optional<values::value>
 			{
 				throw std::logic_error("not implemented");
 			}
@@ -87,7 +91,7 @@ namespace staticdb
 				get_ptr
 #endif
 				, root_layout
-			](storage_type &storage, values::value const &argument) -> values::value
+			](storage_type &storage, values::value const &argument) -> Si::optional<values::value>
 			{
 				return run_getter(storage,
 #if SILICIUM_COMPILER_HAS_EXTENDED_CAPTURE
