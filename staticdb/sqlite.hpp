@@ -81,6 +81,7 @@ namespace staticdb
 					Si::append(query_writer, ")");
 					query.emplace_back('\0');
 					Si::SQLite3::statement_handle const create_table = Si::SQLite3::prepare(database, Si::c_string(query.data())).move_value();
+					Si::throw_if_error(Si::SQLite3::step(*create_table));
 					throw std::logic_error("not implemented");
 				}
 			);
