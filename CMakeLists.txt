@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(staticdb)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+
 if(${CMAKE_SYSTEM} MATCHES "Linux")
 	set(STATICDB_LINUX ON)
 endif()
@@ -118,6 +120,12 @@ if(WIN32)
 	add_definitions("-D_WIN32_WINDOWS")
 
 	add_definitions("-DBOOST_ASIO_HAS_IOCP")
+endif()
+
+find_package(SQLite3)
+if(SQLITE3_FOUND)
+	include_directories(SYSTEM ${SQLITE3_INCLUDE_DIR})
+	add_definitions(-DSQLITE3_FOUND)
 endif()
 
 set(SILICIUM_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/silicium CACHE TYPE PATH)
