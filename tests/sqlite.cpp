@@ -1,4 +1,3 @@
-#ifdef SQLITE3_FOUND
 #include <boost/test/unit_test.hpp>
 #include <staticdb/plan.hpp>
 #include <staticdb/expressions.hpp>
@@ -28,4 +27,3 @@ BOOST_AUTO_TEST_CASE(sqlite_backend)
 		sq::create_tables(*db, root_type, gets);
 	}
 }
-#endif
