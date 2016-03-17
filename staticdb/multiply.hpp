@@ -6,7 +6,7 @@
 namespace staticdb
 {
 	template <class Unsigned>
-	Si::overflow_or<Unsigned> operator * (Si::overflow_or<Unsigned> const &left, Unsigned right)
+	Si::overflow_or<Unsigned> operator*(Si::overflow_or<Unsigned> const &left, Unsigned right)
 	{
 		if (left.is_overflow())
 		{
@@ -14,7 +14,7 @@ namespace staticdb
 		}
 		if ((right != 0) && (*left.value() > ((std::numeric_limits<Unsigned>::max)() / right)))
 		{
-			return Si:: overflow;
+			return Si::overflow;
 		}
 		return *left.value() * right;
 	}

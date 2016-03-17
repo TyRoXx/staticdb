@@ -11,18 +11,12 @@ BOOST_AUTO_TEST_CASE(sqlite_backend)
 	types::type const root_type = types::array(Si::make_unique<types::type>(types::make_unsigned_integer(8)));
 
 	expr::lambda element_equals_key(
-		Si::make_unique<expr::expression>(
-			expr::equals(
-				Si::make_unique<expr::expression>(expr::argument()),
-				Si::make_unique<expr::expression>(expr::bound())
-			)
-		),
-		Si::make_unique<expr::expression>(expr::make_tuple_at(expr::expression(expr::argument()), 1))
-	);
+	    Si::make_unique<expr::expression>(expr::equals(Si::make_unique<expr::expression>(expr::argument()),
+	                                                   Si::make_unique<expr::expression>(expr::bound()))),
+	    Si::make_unique<expr::expression>(expr::make_tuple_at(expr::expression(expr::argument()), 1)));
 	expr::expression const find_equals(expr::filter(
-		Si::make_unique<staticdb::expressions::expression>(expr::make_tuple_at(expr::expression(expr::argument()), 0)),
-		Si::make_unique<staticdb::expressions::expression>(std::move(element_equals_key))
-	));
+	    Si::make_unique<staticdb::expressions::expression>(expr::make_tuple_at(expr::expression(expr::argument()), 0)),
+	    Si::make_unique<staticdb::expressions::expression>(std::move(element_equals_key))));
 	Si::iterator_range<staticdb::get_function const *> gets(&find_equals, &find_equals + 1);
 
 	namespace sq = staticdb::sqlite;
@@ -30,7 +24,7 @@ BOOST_AUTO_TEST_CASE(sqlite_backend)
 	Si::SQLite3::database_handle const db = Si::SQLite3::open(Si::c_string(":memory:")).move_value();
 	if (false)
 	{
-		//TODO
+		// TODO
 		sq::create_tables(*db, root_type, gets);
 	}
 }

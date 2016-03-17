@@ -29,7 +29,7 @@ namespace staticdb
 			}
 
 			explicit basic_tuple(std::vector<Type> elements)
-				: elements(std::move(elements))
+			    : elements(std::move(elements))
 			{
 			}
 		};
@@ -44,7 +44,7 @@ namespace staticdb
 			}
 
 			explicit basic_variant(std::vector<Type> possibilities)
-				: possibilities(std::move(possibilities))
+			    : possibilities(std::move(possibilities))
 			{
 			}
 		};
@@ -59,16 +59,16 @@ namespace staticdb
 			}
 
 			explicit basic_array(std::unique_ptr<Type> elements)
-				: elements(std::move(elements))
+			    : elements(std::move(elements))
 			{
 			}
 
 			basic_array(basic_array const &other)
-				: elements(Si::make_unique<Type>(*other.elements))
+			    : elements(Si::make_unique<Type>(*other.elements))
 			{
 			}
 
-			basic_array &operator = (basic_array const &other)
+			basic_array &operator=(basic_array const &other)
 			{
 				elements = Si::make_unique<Type>(*other.elements);
 				return *this;
@@ -77,12 +77,11 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_array)
 #else
-			basic_array(basic_array &&other) BOOST_NOEXCEPT
-				: elements(std::move(other.elements))
+			basic_array(basic_array &&other) BOOST_NOEXCEPT : elements(std::move(other.elements))
 			{
 			}
 
-			basic_array &operator = (basic_array &&other) BOOST_NOEXCEPT
+			basic_array &operator=(basic_array &&other) BOOST_NOEXCEPT
 			{
 				elements = std::move(other.elements);
 				return *this;
@@ -93,14 +92,7 @@ namespace staticdb
 		template <class Type>
 		struct make_type
 		{
-			typedef Si::variant<
-				unit,
-				bit,
-				function,
-				basic_tuple<Type>,
-				basic_variant<Type>,
-				basic_array<Type>
-			> type;
+			typedef Si::variant<unit, bit, function, basic_tuple<Type>, basic_variant<Type>, basic_array<Type>> type;
 		};
 
 		struct type : make_type<type>::type
@@ -111,9 +103,9 @@ namespace staticdb
 			{
 			}
 
-			template <class A0, class ...Args>
-			type(A0 &&a0, Args &&...args)
-				: base(std::forward<A0>(a0), std::forward<Args>(args)...)
+			template <class A0, class... Args>
+			type(A0 &&a0, Args &&... args)
+			    : base(std::forward<A0>(a0), std::forward<Args>(args)...)
 			{
 			}
 
@@ -127,8 +119,8 @@ namespace staticdb
 		typedef basic_variant<type> variant;
 		typedef basic_array<type> array;
 
-		template <class ...Types>
-		tuple make_tuple(Types &&...elements)
+		template <class... Types>
+		tuple make_tuple(Types &&... elements)
 		{
 			std::vector<type> elements_vector;
 			elements_vector.reserve(sizeof...(Types));
@@ -141,7 +133,10 @@ namespace staticdb
 		{
 			tuple integer;
 			integer.elements.resize(bits);
-			std::generate_n(integer.elements.begin(), bits, []{ return bit(); });
+			std::generate_n(integer.elements.begin(), bits, []
+			                {
+				                return bit();
+				            });
 			return integer;
 		}
 

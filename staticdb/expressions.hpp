@@ -28,12 +28,11 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(literal)
 #else
-			literal(literal &&other) BOOST_NOEXCEPT
-				: value(std::move(other.value))
+			literal(literal &&other) BOOST_NOEXCEPT : value(std::move(other.value))
 			{
 			}
 
-			literal &operator = (literal &&other) BOOST_NOEXCEPT
+			literal &operator=(literal &&other) BOOST_NOEXCEPT
 			{
 				value = std::move(other.value);
 				return *this;
@@ -76,12 +75,11 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_make_tuple)
 #else
-			basic_make_tuple(basic_make_tuple &&other) BOOST_NOEXCEPT
-				: elements(std::move(other.elements))
+			basic_make_tuple(basic_make_tuple &&other) BOOST_NOEXCEPT : elements(std::move(other.elements))
 			{
 			}
 
-			basic_make_tuple &operator = (basic_make_tuple &&other) BOOST_NOEXCEPT
+			basic_make_tuple &operator=(basic_make_tuple &&other) BOOST_NOEXCEPT
 			{
 				elements = std::move(other.elements);
 				return *this;
@@ -100,9 +98,7 @@ namespace staticdb
 			{
 			}
 
-			basic_tuple_at(
-				std::unique_ptr<Expression> tuple,
-				std::unique_ptr<Expression> index)
+			basic_tuple_at(std::unique_ptr<Expression> tuple, std::unique_ptr<Expression> index)
 			    : tuple(std::move(tuple))
 			    , index(std::move(index))
 			{
@@ -116,13 +112,12 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_tuple_at)
 #else
-			basic_tuple_at(basic_tuple_at &&other) BOOST_NOEXCEPT
-				: tuple(std::move(other.tuple))
-				, index(std::move(other.index))
+			basic_tuple_at(basic_tuple_at &&other) BOOST_NOEXCEPT : tuple(std::move(other.tuple)),
+			                                                        index(std::move(other.index))
 			{
 			}
 
-			basic_tuple_at &operator = (basic_tuple_at &&other) BOOST_NOEXCEPT
+			basic_tuple_at &operator=(basic_tuple_at &&other) BOOST_NOEXCEPT
 			{
 				tuple = std::move(other.tuple);
 				index = std::move(other.index);
@@ -139,10 +134,8 @@ namespace staticdb
 			std::unique_ptr<Expression> positive;
 			std::unique_ptr<Expression> negative;
 
-			basic_branch(
-				std::unique_ptr<Expression> condition,
-				std::unique_ptr<Expression> positive,
-				std::unique_ptr<Expression> negative)
+			basic_branch(std::unique_ptr<Expression> condition, std::unique_ptr<Expression> positive,
+			             std::unique_ptr<Expression> negative)
 			    : condition(std::move(condition))
 			    , positive(std::move(positive))
 			    , negative(std::move(negative))
@@ -151,20 +144,20 @@ namespace staticdb
 
 			basic_branch copy() const
 			{
-				return basic_branch(Si::to_unique(condition->copy()), Si::to_unique(positive->copy()), Si::to_unique(negative->copy()));
+				return basic_branch(Si::to_unique(condition->copy()), Si::to_unique(positive->copy()),
+				                    Si::to_unique(negative->copy()));
 			}
 
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_branch)
 #else
-			basic_branch(basic_branch &&other) BOOST_NOEXCEPT
-				: condition(std::move(other.condition))
-				, positive(std::move(other.positive))
-				, negative(std::move(other.negative))
+			basic_branch(basic_branch &&other) BOOST_NOEXCEPT : condition(std::move(other.condition)),
+			                                                    positive(std::move(other.positive)),
+			                                                    negative(std::move(other.negative))
 			{
 			}
 
-			basic_branch &operator = (basic_branch &&other) BOOST_NOEXCEPT
+			basic_branch &operator=(basic_branch &&other) BOOST_NOEXCEPT
 			{
 				condition = std::move(other.condition);
 				positive = std::move(other.positive);
@@ -182,8 +175,8 @@ namespace staticdb
 			std::unique_ptr<Expression> bound;
 
 			explicit basic_lambda(std::unique_ptr<Expression> body, std::unique_ptr<Expression> bound)
-				: body(std::move(body))
-				, bound(std::move(bound))
+			    : body(std::move(body))
+			    , bound(std::move(bound))
 			{
 			}
 
@@ -195,13 +188,12 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_lambda)
 #else
-			basic_lambda(basic_lambda &&other) BOOST_NOEXCEPT
-				: body(std::move(other.body))
-				, bound(std::move(other.bound))
+			basic_lambda(basic_lambda &&other) BOOST_NOEXCEPT : body(std::move(other.body)),
+			                                                    bound(std::move(other.bound))
 			{
 			}
 
-			basic_lambda &operator = (basic_lambda &&other) BOOST_NOEXCEPT
+			basic_lambda &operator=(basic_lambda &&other) BOOST_NOEXCEPT
 			{
 				body = std::move(other.body);
 				bound = std::move(other.bound);
@@ -218,8 +210,8 @@ namespace staticdb
 			std::vector<Expression> arguments;
 
 			explicit basic_call(std::unique_ptr<Expression> function, std::vector<Expression> arguments)
-				: function(std::move(function))
-				, arguments(std::move(arguments))
+			    : function(std::move(function))
+			    , arguments(std::move(arguments))
 			{
 			}
 
@@ -231,13 +223,12 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_call)
 #else
-			basic_call(basic_call &&other) BOOST_NOEXCEPT
-				: function(std::move(other.function))
-				, arguments(std::move(other.arguments))
+			basic_call(basic_call &&other) BOOST_NOEXCEPT : function(std::move(other.function)),
+			                                                arguments(std::move(other.arguments))
 			{
 			}
 
-			basic_call &operator = (basic_call &&other) BOOST_NOEXCEPT
+			basic_call &operator=(basic_call &&other) BOOST_NOEXCEPT
 			{
 				function = std::move(other.function);
 				arguments = std::move(other.arguments);
@@ -254,8 +245,8 @@ namespace staticdb
 			std::unique_ptr<Expression> predicate;
 
 			explicit basic_filter(std::unique_ptr<Expression> input, std::unique_ptr<Expression> predicate)
-				: input(std::move(input))
-				, predicate(std::move(predicate))
+			    : input(std::move(input))
+			    , predicate(std::move(predicate))
 			{
 			}
 
@@ -267,13 +258,12 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_filter)
 #else
-			basic_filter(basic_filter &&other) BOOST_NOEXCEPT
-				: input(std::move(other.input))
-				, predicate(std::move(other.predicate))
+			basic_filter(basic_filter &&other) BOOST_NOEXCEPT : input(std::move(other.input)),
+			                                                    predicate(std::move(other.predicate))
 			{
 			}
 
-			basic_filter &operator = (basic_filter &&other) BOOST_NOEXCEPT
+			basic_filter &operator=(basic_filter &&other) BOOST_NOEXCEPT
 			{
 				input = std::move(other.input);
 				predicate = std::move(other.predicate);
@@ -290,8 +280,8 @@ namespace staticdb
 			std::unique_ptr<Expression> second;
 
 			explicit basic_equals(std::unique_ptr<Expression> first, std::unique_ptr<Expression> second)
-				: first(std::move(first))
-				, second(std::move(second))
+			    : first(std::move(first))
+			    , second(std::move(second))
 			{
 			}
 
@@ -303,13 +293,12 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_equals)
 #else
-			basic_equals(basic_equals &&other) BOOST_NOEXCEPT
-				: first(std::move(other.first))
-				, second(std::move(other.second))
+			basic_equals(basic_equals &&other) BOOST_NOEXCEPT : first(std::move(other.first)),
+			                                                    second(std::move(other.second))
 			{
 			}
 
-			basic_equals &operator = (basic_equals &&other) BOOST_NOEXCEPT
+			basic_equals &operator=(basic_equals &&other) BOOST_NOEXCEPT
 			{
 				first = std::move(other.first);
 				second = std::move(other.second);
@@ -322,27 +311,18 @@ namespace staticdb
 		template <class Expression>
 		struct make_expression_type
 		{
-			typedef Si::variant<
-				literal,
-				argument,
-				bound,
-				basic_make_tuple<Expression>,
-				basic_tuple_at<Expression>,
-				basic_branch<Expression>,
-				basic_lambda<Expression>,
-				basic_call<Expression>,
-				basic_filter<Expression>,
-				basic_equals<Expression>
-			> type;
+			typedef Si::variant<literal, argument, bound, basic_make_tuple<Expression>, basic_tuple_at<Expression>,
+			                    basic_branch<Expression>, basic_lambda<Expression>, basic_call<Expression>,
+			                    basic_filter<Expression>, basic_equals<Expression>> type;
 		};
 
 		struct expression : make_expression_type<expression>::type
 		{
 			typedef make_expression_type<expression>::type base;
 
-			template <class A0, class ...Args>
-			expression(A0 &&a0, Args &&...args)
-				: base(std::forward<A0>(a0), std::forward<Args>(args)...)
+			template <class A0, class... Args>
+			expression(A0 &&a0, Args &&... args)
+			    : base(std::forward<A0>(a0), std::forward<Args>(args)...)
 			{
 			}
 
@@ -360,16 +340,15 @@ namespace staticdb
 			{
 				return as_variant().apply_visitor(copying_visitor<expression>());
 			}
-			
+
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(expression)
 #else
-			expression(expression &&other) BOOST_NOEXCEPT
-				: base(std::move(other.as_variant()))
+			expression(expression &&other) BOOST_NOEXCEPT : base(std::move(other.as_variant()))
 			{
 			}
 
-			expression &operator = (expression &&other) BOOST_NOEXCEPT
+			expression &operator=(expression &&other) BOOST_NOEXCEPT
 			{
 				as_variant() = std::move(other.as_variant());
 				return *this;
@@ -388,84 +367,86 @@ namespace staticdb
 
 		inline tuple_at make_tuple_at(expression tuple, std::size_t index)
 		{
-			return tuple_at(Si::to_unique(std::move(tuple)), Si::make_unique<expression>(literal(values::make_unsigned_integer(index))));
+			return tuple_at(Si::to_unique(std::move(tuple)),
+			                Si::make_unique<expression>(literal(values::make_unsigned_integer(index))));
 		}
 
-		inline values::value execute(expression const &program, values::value const &argument_, values::value const &bound_)
+		inline values::value execute(expression const &program, values::value const &argument_,
+		                             values::value const &bound_)
 		{
 			return Si::visit<values::value>(
-				program,
-				[](literal const &literal_)
-				{
-					return literal_.value.copy();
+			    program,
+			    [](literal const &literal_)
+			    {
+				    return literal_.value.copy();
 				},
-				[&argument_](argument)
-				{
-					return argument_.copy();
+			    [&argument_](argument)
+			    {
+				    return argument_.copy();
 				},
-				[&bound_](bound)
-				{
-					return bound_.copy();
+			    [&bound_](bound)
+			    {
+				    return bound_.copy();
 				},
-				[&argument_, &bound_](make_tuple const &make_tuple_)
-				{
-					values::tuple result;
-					result.elements.reserve(make_tuple_.elements.size());
-					for (expression const &element : make_tuple_.elements)
-					{
-						result.elements.emplace_back(execute(element, argument_, bound_));
-					}
-					return values::value(std::move(result));
+			    [&argument_, &bound_](make_tuple const &make_tuple_)
+			    {
+				    values::tuple result;
+				    result.elements.reserve(make_tuple_.elements.size());
+				    for (expression const &element : make_tuple_.elements)
+				    {
+					    result.elements.emplace_back(execute(element, argument_, bound_));
+				    }
+				    return values::value(std::move(result));
 				},
-				[&argument_, &bound_](tuple_at const &tuple_at_)
-				{
-					values::value const tuple_ = execute(*tuple_at_.tuple, argument_, bound_);
-					values::value const index = execute(*tuple_at_.index, argument_, bound_);
-					values::tuple const * const is_tuple = Si::try_get_ptr<values::tuple>(tuple_.as_variant());
-					if (!is_tuple)
-					{
-						throw std::invalid_argument("tuple_at was called with a non-tuple first argument");
-					}
-					values::tuple const * const is_index_tuple = Si::try_get_ptr<values::tuple>(index.as_variant());
-					if (!is_index_tuple)
-					{
-						throw std::invalid_argument("tuple_at was called with a non-tuple index (second) argument");
-					}
-					Si::optional<std::size_t> const is_index = values::parse_unsigned_integer<std::size_t>(*is_index_tuple);
-					if (!is_index)
-					{
-						throw std::invalid_argument("tuple_at was called with a non-integer index (second) argument");
-					}
-					if (*is_index >= is_tuple->elements.size())
-					{
-						throw std::invalid_argument("tuple_at was called with an out-of-range index (second) argument");
-					}
-					return is_tuple->elements[*is_index].copy();
+			    [&argument_, &bound_](tuple_at const &tuple_at_)
+			    {
+				    values::value const tuple_ = execute(*tuple_at_.tuple, argument_, bound_);
+				    values::value const index = execute(*tuple_at_.index, argument_, bound_);
+				    values::tuple const *const is_tuple = Si::try_get_ptr<values::tuple>(tuple_.as_variant());
+				    if (!is_tuple)
+				    {
+					    throw std::invalid_argument("tuple_at was called with a non-tuple first argument");
+				    }
+				    values::tuple const *const is_index_tuple = Si::try_get_ptr<values::tuple>(index.as_variant());
+				    if (!is_index_tuple)
+				    {
+					    throw std::invalid_argument("tuple_at was called with a non-tuple index (second) argument");
+				    }
+				    Si::optional<std::size_t> const is_index =
+				        values::parse_unsigned_integer<std::size_t>(*is_index_tuple);
+				    if (!is_index)
+				    {
+					    throw std::invalid_argument("tuple_at was called with a non-integer index (second) argument");
+				    }
+				    if (*is_index >= is_tuple->elements.size())
+				    {
+					    throw std::invalid_argument("tuple_at was called with an out-of-range index (second) argument");
+				    }
+				    return is_tuple->elements[*is_index].copy();
 				},
-				[&argument_](branch const &) -> values::value
-				{
-					throw std::logic_error("not implemented");
+			    [&argument_](branch const &) -> values::value
+			    {
+				    throw std::logic_error("not implemented");
 				},
-				[](lambda const &) -> values::value
-				{
-					throw std::logic_error("not implemented");
+			    [](lambda const &) -> values::value
+			    {
+				    throw std::logic_error("not implemented");
 				},
-				[](call const &) -> values::value
-				{
-					throw std::logic_error("not implemented");
+			    [](call const &) -> values::value
+			    {
+				    throw std::logic_error("not implemented");
 				},
-				[](filter const &) -> values::value
-				{
-					throw std::logic_error("not implemented");
+			    [](filter const &) -> values::value
+			    {
+				    throw std::logic_error("not implemented");
 				},
-				[&argument_, &bound_](equals const &equals_) -> values::value
-				{
-					values::value const first = execute(*equals_.first, argument_, bound_);
-					values::value const second = execute(*equals_.second, argument_, bound_);
-					bool const equal = (first == second);
-					return values::value(values::bit(equal));
-				}
-			);
+			    [&argument_, &bound_](equals const &equals_) -> values::value
+			    {
+				    values::value const first = execute(*equals_.first, argument_, bound_);
+				    values::value const second = execute(*equals_.second, argument_, bound_);
+				    bool const equal = (first == second);
+				    return values::value(values::bit(equal));
+				});
 		}
 	}
 }

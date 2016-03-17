@@ -7,10 +7,13 @@
 BOOST_AUTO_TEST_CASE(trivial_plan)
 {
 	auto argument = Si::make_unique<staticdb::expressions::expression>(staticdb::expressions::argument());
-	auto zero = Si::make_unique<staticdb::expressions::expression>(staticdb::expressions::literal(staticdb::values::make_unsigned_integer(0)));
-	auto first = staticdb::expressions::expression(staticdb::expressions::tuple_at(std::move(argument), std::move(zero)));
+	auto zero = Si::make_unique<staticdb::expressions::expression>(
+	    staticdb::expressions::literal(staticdb::values::make_unsigned_integer(0)));
+	auto first =
+	    staticdb::expressions::expression(staticdb::expressions::tuple_at(std::move(argument), std::move(zero)));
 
-	staticdb::types::type const root_type = staticdb::types::make_tuple(staticdb::types::make_unsigned_integer(8), staticdb::types::make_unsigned_integer(8));
+	staticdb::types::type const root_type = staticdb::types::make_tuple(staticdb::types::make_unsigned_integer(8),
+	                                                                    staticdb::types::make_unsigned_integer(8));
 
 	staticdb::memory_storage storage;
 	Si::iterator_range<staticdb::get_function const *> gets;
@@ -29,9 +32,10 @@ BOOST_AUTO_TEST_CASE(find_uint_in_array_plan)
 
 	staticdb::memory_storage storage;
 	{
-		//build an array in the storage
+		// build an array in the storage
 		auto writer = staticdb::make_bits_to_byte_sink(Si::make_container_sink(storage.memory));
-		staticdb::values::serialize(writer, staticdb::values::value(staticdb::values::make_unsigned_integer<std::uint64_t>(3)));
+		staticdb::values::serialize(writer,
+		                            staticdb::values::value(staticdb::values::make_unsigned_integer<std::uint64_t>(3)));
 		for (std::uint8_t i = 1; i <= 3; ++i)
 		{
 			staticdb::values::serialize(writer, staticdb::values::value(staticdb::values::make_unsigned_integer(i)));
@@ -39,26 +43,22 @@ BOOST_AUTO_TEST_CASE(find_uint_in_array_plan)
 	}
 
 	expr::lambda element_equals_key(
-		Si::make_unique<expr::expression>(
-			expr::equals(
-				Si::make_unique<expr::expression>(expr::argument()),
-				Si::make_unique<expr::expression>(expr::bound())
-			)
-		),
-		Si::make_unique<expr::expression>(expr::make_tuple_at(expr::expression(expr::argument()), 1))
-	);
+	    Si::make_unique<expr::expression>(expr::equals(Si::make_unique<expr::expression>(expr::argument()),
+	                                                   Si::make_unique<expr::expression>(expr::bound()))),
+	    Si::make_unique<expr::expression>(expr::make_tuple_at(expr::expression(expr::argument()), 1)));
 	expr::expression const find_equals(expr::filter(
-		Si::make_unique<staticdb::expressions::expression>(expr::make_tuple_at(expr::expression(expr::argument()), 0)),
-		Si::make_unique<staticdb::expressions::expression>(std::move(element_equals_key))
-	));
+	    Si::make_unique<staticdb::expressions::expression>(expr::make_tuple_at(expr::expression(expr::argument()), 0)),
+	    Si::make_unique<staticdb::expressions::expression>(std::move(element_equals_key))));
 	Si::iterator_range<staticdb::get_function const *> gets(&find_equals, &find_equals + 1);
 	Si::iterator_range<staticdb::set_function const *> sets;
-	staticdb::basic_plan<decltype(storage)> const planned = staticdb::make_plan<decltype(storage)>(root_type, gets, sets);
+	staticdb::basic_plan<decltype(storage)> const planned =
+	    staticdb::make_plan<decltype(storage)>(root_type, gets, sets);
 
 	BOOST_CHECK_EQUAL(1u, planned.gets.size());
 	BOOST_CHECK(planned.sets.empty());
 
-	Si::optional<staticdb::values::value> const found = planned.gets[0](storage, staticdb::values::value(staticdb::values::make_unsigned_integer<std::uint8_t>(2)));
+	Si::optional<staticdb::values::value> const found =
+	    planned.gets[0](storage, staticdb::values::value(staticdb::values::make_unsigned_integer<std::uint8_t>(2)));
 	BOOST_REQUIRE(found);
 	std::vector<staticdb::values::value> result_set;
 	result_set.emplace_back(staticdb::values::make_unsigned_integer<std::uint8_t>(2));

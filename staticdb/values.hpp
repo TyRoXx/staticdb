@@ -22,7 +22,7 @@ namespace staticdb
 			}
 		};
 
-		inline std::ostream &operator << (std::ostream &out, unit)
+		inline std::ostream &operator<<(std::ostream &out, unit)
 		{
 			return out << "unit";
 		}
@@ -36,7 +36,7 @@ namespace staticdb
 			}
 
 			explicit bit(bool is_set)
-				: is_set(is_set)
+			    : is_set(is_set)
 			{
 			}
 
@@ -46,12 +46,12 @@ namespace staticdb
 			}
 		};
 
-		inline bool operator == (bit left, bit right)
+		inline bool operator==(bit left, bit right)
 		{
 			return left.is_set == right.is_set;
 		}
 
-		inline std::ostream &operator << (std::ostream &out, bit value)
+		inline std::ostream &operator<<(std::ostream &out, bit value)
 		{
 			return out << value.is_set;
 		}
@@ -66,7 +66,7 @@ namespace staticdb
 			}
 
 			explicit basic_tuple(std::vector<Value> elements)
-				: elements(std::move(elements))
+			    : elements(std::move(elements))
 			{
 			}
 
@@ -84,12 +84,11 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_tuple)
 #else
-			basic_tuple(basic_tuple &&other) BOOST_NOEXCEPT
-				: elements(std::move(other.elements))
+			basic_tuple(basic_tuple &&other) BOOST_NOEXCEPT : elements(std::move(other.elements))
 			{
 			}
 
-			basic_tuple &operator = (basic_tuple &&other) BOOST_NOEXCEPT
+			basic_tuple &operator=(basic_tuple &&other) BOOST_NOEXCEPT
 			{
 				elements = std::move(other.elements);
 				return *this;
@@ -99,13 +98,13 @@ namespace staticdb
 		};
 
 		template <class Value>
-		bool operator == (basic_tuple<Value> const &left, basic_tuple<Value> const &right)
+		bool operator==(basic_tuple<Value> const &left, basic_tuple<Value> const &right)
 		{
 			return left.elements == right.elements;
 		}
 
 		template <class Value>
-		inline std::ostream &operator << (std::ostream &out, basic_tuple<Value> const &value)
+		inline std::ostream &operator<<(std::ostream &out, basic_tuple<Value> const &value)
 		{
 			out << "{";
 			for (auto &element : value.elements)
@@ -125,7 +124,7 @@ namespace staticdb
 			}
 
 			explicit basic_variant(std::unique_ptr<Value> content)
-				: content(std::move(content))
+			    : content(std::move(content))
 			{
 				assert(this->content);
 			}
@@ -141,12 +140,11 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_variant)
 #else
-			basic_variant(basic_variant &&other) BOOST_NOEXCEPT
-				: content(std::move(other.content))
+			basic_variant(basic_variant &&other) BOOST_NOEXCEPT : content(std::move(other.content))
 			{
 			}
 
-			basic_variant &operator = (basic_variant &&other) BOOST_NOEXCEPT
+			basic_variant &operator=(basic_variant &&other) BOOST_NOEXCEPT
 			{
 				content = std::move(other.content);
 				return *this;
@@ -156,7 +154,7 @@ namespace staticdb
 		};
 
 		template <class Value>
-		inline std::ostream &operator << (std::ostream &out, basic_variant<Value> const &value)
+		inline std::ostream &operator<<(std::ostream &out, basic_variant<Value> const &value)
 		{
 			return out << *value.content;
 		}
@@ -180,8 +178,8 @@ namespace staticdb
 			}
 
 			explicit basic_closure(std::unique_ptr<closure_body> body, std::unique_ptr<Value> bound)
-				: body(std::move(body))
-				, bound(std::move(bound))
+			    : body(std::move(body))
+			    , bound(std::move(bound))
 			{
 				assert(this->body);
 				assert(this->bound);
@@ -200,13 +198,12 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(basic_closure)
 #else
-			basic_closure(basic_closure &&other) BOOST_NOEXCEPT
-				: body(std::move(other.body))
-				, bound(std::move(other.bound))
+			basic_closure(basic_closure &&other) BOOST_NOEXCEPT : body(std::move(other.body)),
+			                                                      bound(std::move(other.bound))
 			{
 			}
 
-			basic_closure &operator = (basic_closure &&other) BOOST_NOEXCEPT
+			basic_closure &operator=(basic_closure &&other) BOOST_NOEXCEPT
 			{
 				body = std::move(other.body);
 				bound = std::move(other.bound);
@@ -217,7 +214,7 @@ namespace staticdb
 		};
 
 		template <class Value>
-		inline std::ostream &operator << (std::ostream &out, basic_closure<Value> const &value)
+		inline std::ostream &operator<<(std::ostream &out, basic_closure<Value> const &value)
 		{
 			return out << "closure(" << *value.bound << ")";
 		}
@@ -225,13 +222,8 @@ namespace staticdb
 		template <class Value>
 		struct make_value_type
 		{
-			typedef Si::non_copyable_variant<
-				unit,
-				bit,
-				basic_tuple<Value>,
-				basic_variant<Value>,
-				basic_closure<Value>
-			> type;
+			typedef Si::non_copyable_variant<unit, bit, basic_tuple<Value>, basic_variant<Value>, basic_closure<Value>>
+			    type;
 		};
 
 		struct value : make_value_type<value>::type
@@ -242,13 +234,15 @@ namespace staticdb
 			{
 			}
 
-			template <class A0, class ...Args
+			template <
+			    class A0, class... Args
 #ifdef _MSC_VER
-				, class = typename std::enable_if<!std::is_same<typename std::decay<A0>::type, value>::value, void>::type
+			    ,
+			    class = typename std::enable_if<!std::is_same<typename std::decay<A0>::type, value>::value, void>::type
 #endif
-			>
-			value(A0 &&a0, Args &&...args)
-				: base(std::forward<A0>(a0), std::forward<Args>(args)...)
+			    >
+			value(A0 &&a0, Args &&... args)
+			    : base(std::forward<A0>(a0), std::forward<Args>(args)...)
 			{
 			}
 
@@ -270,12 +264,11 @@ namespace staticdb
 #if SILICIUM_COMPILER_GENERATES_MOVES
 			SILICIUM_DEFAULT_MOVE(value)
 #else
-			value(value &&other) BOOST_NOEXCEPT
-				: base(std::move(other.as_variant()))
+			value(value &&other) BOOST_NOEXCEPT : base(std::move(other.as_variant()))
 			{
 			}
 
-			value &operator = (value &&other) BOOST_NOEXCEPT
+			value &operator=(value &&other) BOOST_NOEXCEPT
 			{
 				as_variant() = std::move(other.as_variant());
 				return *this;
@@ -288,36 +281,34 @@ namespace staticdb
 		typedef basic_variant<value> variant;
 		typedef basic_closure<value> closure;
 
-		inline bool operator == (value const &first, value const &second)
+		inline bool operator==(value const &first, value const &second)
 		{
-			return Si::visit<bool>(
-				first,
-				[&second](unit) -> bool
-				{
-					return Si::try_get_ptr<unit>(second) != nullptr;
-				},
-				[&second](bit first_bit) -> bool
-				{
-					bit const * const second_bit = Si::try_get_ptr<bit>(second);
-					return second_bit && (*second_bit == first_bit);
-				},
-				[&second](tuple const &first_tuple) -> bool
-				{
-					tuple const * const second_tuple = Si::try_get_ptr<tuple>(second);
-					return second_tuple && (*second_tuple == first_tuple);
-				},
-				[](variant const &) -> bool
-				{
-					throw std::logic_error("not implemented");
-				},
-				[](closure const &) -> bool
-				{
-					throw std::logic_error("not implemented");
-				}
-			);
+			return Si::visit<bool>(first,
+			                       [&second](unit) -> bool
+			                       {
+				                       return Si::try_get_ptr<unit>(second) != nullptr;
+				                   },
+			                       [&second](bit first_bit) -> bool
+			                       {
+				                       bit const *const second_bit = Si::try_get_ptr<bit>(second);
+				                       return second_bit && (*second_bit == first_bit);
+				                   },
+			                       [&second](tuple const &first_tuple) -> bool
+			                       {
+				                       tuple const *const second_tuple = Si::try_get_ptr<tuple>(second);
+				                       return second_tuple && (*second_tuple == first_tuple);
+				                   },
+			                       [](variant const &) -> bool
+			                       {
+				                       throw std::logic_error("not implemented");
+				                   },
+			                       [](closure const &) -> bool
+			                       {
+				                       throw std::logic_error("not implemented");
+				                   });
 		}
 
-		inline std::ostream &operator << (std::ostream &out, value const &v)
+		inline std::ostream &operator<<(std::ostream &out, value const &v)
 		{
 			return out << v.as_variant();
 		}
@@ -350,7 +341,7 @@ namespace staticdb
 				{
 					return Si::none;
 				}
-				bit const * const bit_element = Si::try_get_ptr<bit>(big_endian.elements[parsed_bits]);
+				bit const *const bit_element = Si::try_get_ptr<bit>(big_endian.elements[parsed_bits]);
 				if (!bit_element)
 				{
 					return Si::none;
@@ -377,101 +368,100 @@ namespace staticdb
 
 		inline bool conforms_to_type(value const &object, types::type const &expected)
 		{
-			return Si::visit<bool>(
-				object,
-				[&expected](unit)
-				{
-					return Si::try_get_ptr<types::unit>(expected.as_variant()) != nullptr;
-				},
-				[&expected](bit)
-				{
-					return Si::try_get_ptr<types::bit>(expected.as_variant()) != nullptr;
-				},
-				[&expected](tuple const &value) -> bool
-				{
-					types::tuple const * const expected_tuple = Si::try_get_ptr<types::tuple>(expected.as_variant());
-					if (!expected_tuple)
-					{
-						types::array const * const expected_array = Si::try_get_ptr<types::array>(expected.as_variant());
-						if (!expected_array)
-						{
-							return false;
-						}
-						for (values::value const &element : value.elements)
-						{
-							if (!conforms_to_type(element, *expected_array->elements))
-							{
-								return false;
-							}
-						}
-						return true;
-					}
-					if (expected_tuple->elements.size() != value.elements.size())
-					{
-						return false;
-					}
-					for (size_t i = 0, c = value.elements.size(); i < c; ++i)
-					{
-						if (!conforms_to_type(value.elements[i], expected_tuple->elements[i]))
-						{
-							return false;
-						}
-					}
-					return true;
-				},
-				[&expected](variant const &value) -> bool
-				{
-					assert(value.content);
-					types::variant const * const expected_variant = Si::try_get_ptr<types::variant>(expected.as_variant());
-					if (!expected_variant)
-					{
-						return false;
-					}
-					for (types::type const &possibility : expected_variant->possibilities)
-					{
-						if (conforms_to_type(*value.content, possibility))
-						{
-							return true;
-						}
-					}
-					return false;
-				},
-				[&expected](closure const &) -> bool
-				{
-					return Si::try_get_ptr<types::function>(expected.as_variant()) != nullptr;
-				}
-			);
+			return Si::visit<bool>(object,
+			                       [&expected](unit)
+			                       {
+				                       return Si::try_get_ptr<types::unit>(expected.as_variant()) != nullptr;
+				                   },
+			                       [&expected](bit)
+			                       {
+				                       return Si::try_get_ptr<types::bit>(expected.as_variant()) != nullptr;
+				                   },
+			                       [&expected](tuple const &value) -> bool
+			                       {
+				                       types::tuple const *const expected_tuple =
+				                           Si::try_get_ptr<types::tuple>(expected.as_variant());
+				                       if (!expected_tuple)
+				                       {
+					                       types::array const *const expected_array =
+					                           Si::try_get_ptr<types::array>(expected.as_variant());
+					                       if (!expected_array)
+					                       {
+						                       return false;
+					                       }
+					                       for (values::value const &element : value.elements)
+					                       {
+						                       if (!conforms_to_type(element, *expected_array->elements))
+						                       {
+							                       return false;
+						                       }
+					                       }
+					                       return true;
+				                       }
+				                       if (expected_tuple->elements.size() != value.elements.size())
+				                       {
+					                       return false;
+				                       }
+				                       for (size_t i = 0, c = value.elements.size(); i < c; ++i)
+				                       {
+					                       if (!conforms_to_type(value.elements[i], expected_tuple->elements[i]))
+					                       {
+						                       return false;
+					                       }
+				                       }
+				                       return true;
+				                   },
+			                       [&expected](variant const &value) -> bool
+			                       {
+				                       assert(value.content);
+				                       types::variant const *const expected_variant =
+				                           Si::try_get_ptr<types::variant>(expected.as_variant());
+				                       if (!expected_variant)
+				                       {
+					                       return false;
+				                       }
+				                       for (types::type const &possibility : expected_variant->possibilities)
+				                       {
+					                       if (conforms_to_type(*value.content, possibility))
+					                       {
+						                       return true;
+					                       }
+				                       }
+				                       return false;
+				                   },
+			                       [&expected](closure const &) -> bool
+			                       {
+				                       return Si::try_get_ptr<types::function>(expected.as_variant()) != nullptr;
+				                   });
 		}
 
 		template <class BitSink>
 		inline void serialize(BitSink &&destination, value const &object)
 		{
-			return Si::visit<void>(
-				object,
-				[](unit)
-				{
-				},
-				[&destination](bit value)
-				{
-					Si::append(destination, value);
-				},
-				[&destination](tuple const &t)
-				{
-					for (value const &element : t.elements)
-					{
-						serialize(destination, element);
-					}
-				},
-				[&destination](variant const &value)
-				{
-					assert(value.content);
-					return serialize(destination, *value.content);
-				},
-				[](closure const &)
-				{
-					throw std::logic_error("not implemented");
-				}
-			);
+			return Si::visit<void>(object,
+			                       [](unit)
+			                       {
+				                   },
+			                       [&destination](bit value)
+			                       {
+				                       Si::append(destination, value);
+				                   },
+			                       [&destination](tuple const &t)
+			                       {
+				                       for (value const &element : t.elements)
+				                       {
+					                       serialize(destination, element);
+				                       }
+				                   },
+			                       [&destination](variant const &value)
+			                       {
+				                       assert(value.content);
+				                       return serialize(destination, *value.content);
+				                   },
+			                       [](closure const &)
+			                       {
+				                       throw std::logic_error("not implemented");
+				                   });
 		}
 	}
 }

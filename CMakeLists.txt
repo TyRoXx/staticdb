@@ -140,3 +140,6 @@ add_definitions("-DSILICIUM_NO_DEPRECATED")
 
 include_directories(".")
 add_subdirectory("tests")
+
+find_program(STATICDB_CLANG_FORMAT NAMES clang-format clang-format-3.7 clang-format-3.8 PATHS "C:/Program Files/LLVM/bin")
+add_custom_target(clang-format COMMAND ${STATICDB_CLANG_FORMAT} -i ${formatted} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

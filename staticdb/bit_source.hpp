@@ -41,7 +41,6 @@ namespace staticdb
 		}
 
 	private:
-
 		ByteSource m_next;
 		byte m_buffer;
 		std::uint8_t m_buffered_bits;
@@ -65,8 +64,7 @@ namespace staticdb
 	};
 
 	template <class ByteSource>
-	auto make_byte_to_bit_source(ByteSource &&next)
-		-> byte_to_bit_source<typename std::decay<ByteSource>::type>
+	auto make_byte_to_bit_source(ByteSource &&next) -> byte_to_bit_source<typename std::decay<ByteSource>::type>
 	{
 		return byte_to_bit_source<typename std::decay<ByteSource>::type>(std::forward<ByteSource>(next));
 	}
