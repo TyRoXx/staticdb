@@ -2,6 +2,7 @@
 #define STATICDB_TYPES_HPP
 
 #include <silicium/variant.hpp>
+#include <silicium/make_unique.hpp>
 
 namespace staticdb
 {
