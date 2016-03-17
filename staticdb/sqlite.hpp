@@ -1,7 +1,7 @@
 #ifndef STATICDB_SQLITE_HPP
 #define STATICDB_SQLITE_HPP
 
-#include <silicium/sqlite3.hpp>
+#include <sqlite3pp/statement.hpp>
 #include <staticdb/plan.hpp>
 #include <silicium/sink/iterator_sink.hpp>
 #include <silicium/source/memory_source.hpp>
@@ -80,14 +80,14 @@ namespace staticdb
 
 				                Si::append(query_writer, ")");
 				                query.emplace_back('\0');
-				                Si::SQLite3::statement_handle const create_table =
-				                    Si::SQLite3::prepare(database, Si::c_string(query.data())).move_value();
-				                switch (Si::SQLite3::step(*create_table).get())
+				                sqlite3pp::statement_handle const create_table =
+				                    sqlite3pp::prepare(database, Si::c_string(query.data())).move_value();
+				                switch (sqlite3pp::step(*create_table).get())
 				                {
-				                case Si::SQLite3::step_result::done:
+				                case sqlite3pp::step_result::done:
 					                break;
 
-				                case Si::SQLite3::step_result::row:
+				                case sqlite3pp::step_result::row:
 					                throw std::logic_error("not implemented");
 				                }
 

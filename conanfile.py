@@ -5,7 +5,7 @@ class StaticDbConan(ConanFile):
     name = "staticdb"
     version = "0.1"
     generators = "cmake"
-    requires = "silicium/0.9@TyRoXx/master", "sqlite3/3.10.2@TyRoXx/stable"
+    requires = "sqlite3pp/0.9@TyRoXx/master"
     url="http://github.com/tyroxx/staticdb"
     license="MIT"
 

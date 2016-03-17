@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(sqlite_backend)
 
 	namespace sq = staticdb::sqlite;
 
-	Si::SQLite3::database_handle const db = Si::SQLite3::open(Si::c_string(":memory:")).move_value();
+	sqlite3pp::database_handle const db = sqlite3pp::open_or_create(Si::c_string(":memory:")).move_value();
 	if (false)
 	{
 		// TODO
