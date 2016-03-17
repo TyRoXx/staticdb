@@ -1,5 +1,6 @@
 #include <boost/test/unit_test.hpp>
 #include <staticdb/layout.hpp>
+#include <silicium/make_unique.hpp>
 
 BOOST_AUTO_TEST_CASE(calculate_layout_array_of_bitset)
 {

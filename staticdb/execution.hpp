@@ -5,6 +5,7 @@
 #include <staticdb/layout.hpp>
 #include <staticdb/storage.hpp>
 #include <staticdb/bit_source.hpp>
+#include <staticdb/multiply.hpp>
 
 namespace staticdb
 {
@@ -216,7 +217,7 @@ namespace staticdb
 					{
 						throw std::invalid_argument("extract_address called on not-a-tuple");
 					}
-					Si::optional<address::value_type> parsed = values::parse_unsigned_integer<address::value_type>(*direct_tuple);
+					Si::optional<address> parsed = values::parse_unsigned_integer<address>(*direct_tuple);
 					if (!parsed)
 					{
 						throw std::invalid_argument("extract_address called with non-bitset or too long tuple");
@@ -238,11 +239,11 @@ namespace staticdb
 				},
 				[index_int](basic_tuple<pseudo_value<Storage>> const &indirect_tuple) -> pseudo_value<Storage>
 				{
-					if (index_int.value >= indirect_tuple.elements.size())
+					if (index_int >= indirect_tuple.elements.size())
 					{
 						throw std::invalid_argument("tuple_at called with index out of range");
 					}
-					return indirect_tuple.elements[static_cast<size_t>(index_int.value)].copy();
+					return indirect_tuple.elements[static_cast<size_t>(index_int)].copy();
 				},
 				[](basic_closure<pseudo_value<Storage>> const &) -> pseudo_value<Storage>
 				{
@@ -255,11 +256,11 @@ namespace staticdb
 					{
 						throw std::invalid_argument("tuple_at called on not-a-tuple");
 					}
-					if (index_int.value >= direct_tuple->elements.size())
+					if (index_int >= direct_tuple->elements.size())
 					{
 						throw std::invalid_argument("tuple_at called with index out of range");
 					}
-					return pseudo_value<Storage>(direct_tuple->elements[static_cast<size_t>(index_int.value)].copy());
+					return pseudo_value<Storage>(direct_tuple->elements[static_cast<size_t>(index_int)].copy());
 				}
 			);
 		}
@@ -342,16 +343,16 @@ namespace staticdb
 		address deserialize_address(storage_pointer<Storage> const &begin)
 		{
 			address result = 0;
-			assert(sizeof(result) == address_size_in_bytes.value);
+			assert(sizeof(result) == address_size_in_bytes);
 			auto byte_source = begin.storage->read_at(begin.where);
-			for (address::value_type i = 0; i < address_size_in_bytes.value; ++i)
+			for (address i = 0; i < address_size_in_bytes; ++i)
 			{
 				Si::optional<byte> digit = Si::get(byte_source);
 				if (!digit)
 				{
 					throw std::invalid_argument("deserialize_address needs more bytes");
 				}
-				result.value |= (*digit << (address_size_in_bytes.value - 1 - i));
+				result |= (*digit << (address_size_in_bytes - 1 - i));
 			}
 			return result;
 		}
@@ -383,11 +384,11 @@ namespace staticdb
 				[&element_begin](layouts::bitset const &bitset_) -> pseudo_value<Storage>
 				{
 					std::vector<values::value> bits;
-					bits.reserve(bitset_.length.value);
-					assert(element_begin.where.value % 8 == 0);
-					auto byte_reader = element_begin.storage->read_at(*(element_begin.where / address(8)).value());
+					bits.reserve(bitset_.length);
+					assert(element_begin.where % 8 == 0);
+					auto byte_reader = element_begin.storage->read_at(element_begin.where / address(8));
 					auto bit_reader = make_byte_to_bit_source(byte_reader);
-					for (address::value_type i = 0; i < bitset_.length.value; ++i)
+					for (address i = 0; i < bitset_.length; ++i)
 					{
 						Si::optional<values::bit> const bit_read = Si::get(bit_reader);
 						if (!bit_read)
@@ -426,7 +427,7 @@ namespace staticdb
 				[&predicate](basic_array_accessor<Storage> const &array) -> Si::optional<pseudo_value<Storage>>
 				{
 					std::vector<pseudo_value<Storage>> results;
-					for (address::value_type index = 0, length = array_length(array.begin).value; index < length; ++index)
+					for (address index = 0, length = array_length(array.begin); index < length; ++index)
 					{
 						Si::optional<pseudo_value<Storage>> element = array_get(array.begin, index, array.element_layout);
 						if (!element)

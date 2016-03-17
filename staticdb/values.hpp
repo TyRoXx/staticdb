@@ -7,6 +7,7 @@
 #include <silicium/to_unique.hpp>
 #include <silicium/sink/append.hpp>
 #include <silicium/optional.hpp>
+#include <silicium/make_unique.hpp>
 #include <cstdint>
 
 namespace staticdb

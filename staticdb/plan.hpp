@@ -4,6 +4,7 @@
 #include <staticdb/execution.hpp>
 #include <staticdb/storage.hpp>
 #include <staticdb/layout.hpp>
+#include <silicium/to_shared.hpp>
 #include <silicium/function.hpp>
 
 namespace staticdb

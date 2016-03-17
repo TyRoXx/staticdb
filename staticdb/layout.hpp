@@ -5,6 +5,7 @@
 #include <staticdb/storage.hpp>
 #include <staticdb/copy.hpp>
 #include <silicium/to_unique.hpp>
+#include <silicium/arithmetic/add.hpp>
 
 namespace staticdb
 {
@@ -259,7 +260,7 @@ namespace staticdb
 					Si::overflow_or<address> sum = address(0);
 					for (layout const &element : tuple_.elements)
 					{
-						sum = sum + layout_size_in_bits(element);
+						sum += layout_size_in_bits(element);
 					}
 					return sum;
 				},
